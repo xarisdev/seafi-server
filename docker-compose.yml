@@ -1,0 +1,21 @@
+version: '3.14'
+
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    depends_on:
+      - server
+  agents:
+    build:
+      context: ./agents
+      dockerfile: Dockerfile
+    depends_on:
+      - server

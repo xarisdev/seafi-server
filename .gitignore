@@ -1,0 +1,12 @@
+.vscode/
+.venv/
+
+*.code-workspace
+
+__pycache__/
+*.pyc
+
+logs/*
+*.log
+
+assets/
