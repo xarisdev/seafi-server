@@ -10,7 +10,7 @@ async def lifespan(app: FastAPI):
     yield
 
 from .config import settings
-from ..api import api_v1_router
+from ..api import api_router
 
 app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
-app.include_router(api_v1_router)
+app.include_router(api_router)
