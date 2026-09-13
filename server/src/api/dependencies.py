@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import HTTPException, Header, status
+from fastapi import HTTPException, Header, Body, status
 
 from ..app.config import settings
 
