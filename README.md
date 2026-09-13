@@ -61,3 +61,34 @@
 }
 ```
 </details>
+
+### Работа с фильтрами
+<details>
+<summary><code>POST /filter/new</code> - Создание фильтра</summary>
+
+Параметры запроса:
+| Название | Тип | Описание |
+|----------|-----|----------|
+
+Параметры Headers:
+```json
+{
+    "Authorization": "secret_key"
+}
+```
+Параметры Body:
+```json
+{
+    "telegram_id": "int",
+    "price_min": "int",
+    "price_max": "int",
+    "owner": "str"
+}
+```
+Ответ JSON:
+```json
+{
+    "status": "success"
+}
+```
+</details>
