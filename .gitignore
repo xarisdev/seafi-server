@@ -9,4 +9,6 @@ __pycache__/
 logs/*
 *.log
 
+*.db
+
 assets/
