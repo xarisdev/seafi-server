@@ -11,7 +11,7 @@ from fastapi import (
 
 from ...db.models import User
 from ...db.database import get_db
-from ...models.users import UserRegistrationRequest
+from ..models import UserRegistrationRequest
 
 from ..dependencies import verify_secret_key
 

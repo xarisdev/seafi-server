@@ -1,4 +1,4 @@
-from typing import Annotated, Any
+from typing import Annotated
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +12,7 @@ from fastapi import (
 from ...db.database import get_db
 from ...db.models import User, Subscription, Filter
 
-from ...models.filters import FilterCreateRequest
+from ..models import FilterCreateRequest
 
 from ..dependencies import verify_secret_key
 

@@ -7,9 +7,9 @@ CURRENT_FILE_DIR = Path(__file__).resolve().parent
 ENV_PATH = CURRENT_FILE_DIR.parent.parent / ".env"
 
 class Application(BaseSettings):
-    APP_NAME: str = "seafi-server"
-    API_TOKEN: str
-    DATABASE_URL: str
+    APP_NAME: str
+    APP_TOKEN: str
+    ADMIN_ID: int
 
     model_config = SettingsConfigDict(
         env_file=ENV_PATH,
@@ -24,9 +24,20 @@ class DataBase(BaseSettings):
         env_file_encoding="utf-8"
     )
 
+class PaymentService(BaseSettings):
+    LAVA_API_URL: str
+    LAVA_API_KEY: str
+    LAVA_API_PASSWORD: str
+
+    model_config = SettingsConfigDict(
+        env_file=ENV_PATH,
+        env_file_encoding="utf-8"
+    )
+
 class Settings(
     Application,
-    DataBase
+    DataBase,
+    PaymentService
 ): pass
 
 settings = Settings()
