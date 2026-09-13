@@ -92,3 +92,77 @@
 }
 ```
 </details>
+
+### Lava.top
+<details>
+<summary><code>GET /payments/products?telegram_id=int</code> - Получение списка продуктов (администратор)</summary>
+
+Параметры запроса:
+| Название | Тип | Описание |
+|----------|-----|----------|
+| `telegram_id` | `int` | Идентификатор администратора |
+
+Параметры Headers:
+```json
+{
+    "Authorization": "secret_key"
+}
+```
+Параметры Body:
+```json
+{
+
+}
+```
+Ответ JSON:
+```json
+{
+    "status": "success",
+    "products": [
+        {
+            "id": "id",
+            "title": "Title of the product",
+            "offer_id": "offerId",
+            "offer_name": "Name of the offer"
+        }
+    ]
+}
+```
+</details>
+
+<details>
+<summary><code>POST /payments/create-link</code> - Создание ссылки на оплату</summary>
+
+Параметры запроса:
+| Название | Тип | Описание |
+|----------|-----|----------|
+
+Параметры Headers:
+```json
+{
+    "Authorization": "secret_key"
+}
+```
+Параметры Body:
+```json
+{
+    "telegram_id": "int",
+    "comment": "str"
+}
+```
+Ответ JSON:
+```json
+{
+    "status": "success",
+    "invoice": {
+        "id": "str",
+        "status": "str",
+        "amountTotal": {
+            "currency": "str",
+            "amount": "int"
+        },
+        "paymentUrl": "str"
+    }
+}
+```
+</details>
