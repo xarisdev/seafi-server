@@ -6,18 +6,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import (
     APIRouter,
     HTTPException, status,
-    Depends, Header, Body
+    Depends
 )
 
 from ...db.models import User
 from ...db.database import get_db
 from ...models.users import UserRegistrationRequest
 
-from ...app.config import settings
-
-async def verify_secret_key(secret_key: Annotated[str, Header(alias="authorization")]):
-    if secret_key != settings.API_TOKEN:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="wk")
+from ..dependencies import verify_secret_key
 
 router = APIRouter(tags=["users"], dependencies=[Depends(verify_secret_key)])
 
