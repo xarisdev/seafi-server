@@ -1,6 +1,6 @@
 ## API Docs (v1)
-Базовый URL: `https://seafi.xaris.space/api`
-Версия API: `/v1`
+- Базовый URL: `https://seafi.xaris.space/api`
+- Версия API: `/v1`
 
 ### Работа с пользователями
 <details>

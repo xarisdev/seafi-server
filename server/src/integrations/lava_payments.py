@@ -2,7 +2,7 @@ import httpx
 
 from typing import Any
 
-from ..app.config import settings
+from ..core.config import settings
 from ..models.lava import ProductSchema
 
 API_V2_PRODUCTS_URL = settings.LAVA_API_URL+"/v2/products?feedVisibility=ALL"

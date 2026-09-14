@@ -3,23 +3,23 @@ from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 
 from ..models import CreatePaymentLinkSchema
-from ...app.config import settings
-from ...crud.lava_service import get_my_products, generate_payment_link
+from ...core.config import settings
+from ...integrations.lava_payments import get_my_products, generate_payment_link
 
 from ..dependencies import verify_secret_key
 
 router = APIRouter(prefix="/payments", tags=["payments"], dependencies=[Depends(verify_secret_key)])
 
 @router.get("/products")
-async def get_products(telegram_id: Annotated[Optional[int], Query(description="Administator ID")] = None):
+async def get_products(telegram_id: Annotated[Optional[int], Query(description="Administrator ID")] = None):
     if telegram_id != settings.ADMIN_ID:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Forbidden"
         )
-    result = await get_my_products()
-    if result:
-        return result
+    products = await get_my_products()
+    if products:
+        return products
     
     return {"status": "error", "msg": "No data received"}
 
