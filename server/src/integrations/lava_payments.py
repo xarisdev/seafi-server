@@ -8,8 +8,6 @@ from ..models.lava import ProductSchema
 API_V2_PRODUCTS_URL = settings.LAVA_API_URL+"/v2/products?feedVisibility=ALL"
 API_V3_INVOICE_URL = settings.LAVA_API_URL+"/v3/invoice"
 
-SEAFI_PAYMENTS_URL = "https://seafi.xaris.space/payments/redirect"
-
 async def get_my_products() -> dict[str, Any]:
     headers = {"X-Api-Key": settings.LAVA_API_KEY}
 
@@ -58,9 +56,9 @@ async def generate_payment_link(
     offerId: str,
     amount: float,
     currency: str = "USD",
-    successful_return_url: str = f"{SEAFI_PAYMENTS_URL}/success",
-    failure_return_url: str = f"{SEAFI_PAYMENTS_URL}/failure",
-    cancel_return_url: str = f"{SEAFI_PAYMENTS_URL}/cancel"
+    successful_return_url: str = f"{settings.REDIRECT_URL}",
+    failure_return_url: str = f"{settings.REDIRECT_URI}/failure",
+    cancel_return_url: str = f"{settings.REDIRECT_URI}/cancel"
 ) -> dict[str, str]:
     payload_schema = {
         "email": f"user_{telegram_id}@xaris.tech",

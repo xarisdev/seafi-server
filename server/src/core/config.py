@@ -29,6 +29,9 @@ class PaymentService(BaseSettings):
     LAVA_API_KEY: str
     LAVA_API_PASSWORD: str
 
+    REDIRECT_URL: str
+    REDIRECT_URI: str
+
     model_config = SettingsConfigDict(
         env_file=ENV_PATH,
         env_file_encoding="utf-8"
