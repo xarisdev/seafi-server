@@ -1,7 +1,7 @@
+import json
+
 from telegram import (
-    Update, Message, CallbackQuery, 
-    ReplyKeyboardMarkup, ReplyKeyboardRemove, 
-    InlineKeyboardMarkup, InlineKeyboardButton,
+    Update, Message, CallbackQuery,
     )
 
 from telegram.ext import (
@@ -13,6 +13,10 @@ from telegram.ext import (
 from .config import settings
 from ..scripts.web_agent import web_agent
 from ..scripts.users import get_user_model
+
+from ..models.web import ServerUser
+
+from .inline_keyboard import get_menu_keyboard, get_back_menu
 
 class TelegramBotMessage():
     #TODO logging
@@ -56,7 +60,7 @@ class TelegramBot(TelegramBotMessage):
             headers={"Authorization": settings.APP_API_TOKEN},
             json={"username": user.username, "telegram_id": user.telegram_id}
         )
-        if result.data.get("status", "") != "success":
+        if result.status_code not in [201, 409]:
             await self.send_message(
                 context,
                 chat_id=user.telegram_id,
@@ -64,12 +68,69 @@ class TelegramBot(TelegramBotMessage):
                 )
             return
 
-        await self.delete_message(context, chat_id=user.telegram_id, message_id=update.effective_message.message_id)
-        await self.send_message(context, chat_id=user.telegram_id, text="Добро пожаловать!") # Условный ответ
+        await self.send_message(
+            context,
+            chat_id=user.telegram_id,
+            text="Добро пожаловать! Меню:",
+            reply_markup=get_menu_keyboard(False)
+        )
 
     async def message_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         #TODO logging
         user = get_user_model(update) # scripts
+
+    async def callback_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        query = update.callback_query
+        await query.answer()
+
+        try:
+            callback_data = json.loads(query.data)
+            action = callback_data.get("a")
+
+            if action == "view_prof":
+                await self.profile_command(update, context)
+            elif action == "set_parser":
+                pass
+            elif action == "set_menu":
+                await self.menu_command(update, context)
+
+        except Exception as exc:
+            print(exc)
+
+    async def profile_command(self, update: Update, context):
+        user = get_user_model(update)
+        result = await web_agent.fetch(
+            url=f"/api/v1/user/{user.telegram_id}",
+            headers={"Authorization": settings.APP_API_TOKEN}
+        )
+        if result.status_code != 200:
+            return
+
+        server_user = ServerUser(**result.data)
+        text = (
+            "Профиль\n"
+            f"ID: {server_user.telegram_id}\n"
+            f"Username: {server_user.username}\n"
+            f"Регистрация: {server_user.created_at.split("T")[0]}"
+        )
+        await self.edit_message(
+            context,
+            chat_id=user.telegram_id,
+            message_id=update.callback_query.message.message_id,
+            text=text,
+            reply_markup=get_back_menu()
+        )
+
+    async def menu_command(self, update: Update, context):
+        user = get_user_model(update)
+        await self.edit_message(
+            context,
+            chat_id=user.telegram_id,
+            message_id=update.callback_query.message.message_id,
+            text="Меню:",
+            reply_markup=get_menu_keyboard(False)
+        )
+
 
 async def on_startup(application) -> None:
     await web_agent.init_client()
@@ -82,6 +143,7 @@ bot = TelegramBot()
 
 # handlers
 command_handler = CommandHandler("start", bot.start_command)
+callback_handler = CallbackQueryHandler(bot.callback_handler)
 
 # app
 app = (
@@ -93,3 +155,4 @@ app = (
 )
 
 app.add_handler(command_handler)
+app.add_handler(callback_handler)
