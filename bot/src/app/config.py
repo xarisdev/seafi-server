@@ -10,6 +10,7 @@ class Application(BaseSettings):
     APP_API_TOKEN: str
     TELEGRAM_BOT_TOKEN: str
     BASE_SERVER_URL: str
+    WSS_SERVER_URL: str
 
     model_config = SettingsConfigDict(
         env_file=ENV_PATH,

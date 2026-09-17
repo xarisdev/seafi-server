@@ -51,7 +51,7 @@ class TelegramBot(TelegramBotMessage):
         #TODO logging
         user = get_user_model(update)
         result = await web_agent.fetch(
-            url="/api/v1/users",
+            url="/api/v1/user",
             method="POST",
             headers={"Authorization": settings.APP_API_TOKEN},
             json={"username": user.username, "telegram_id": user.telegram_id}
