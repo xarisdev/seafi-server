@@ -20,8 +20,7 @@
 ```json
 {
     "username": "str",
-    "telegram_id": "int",
-    "secret_key": "str"
+    "telegram_id": "int"
 }
 ```
 **Ответ JSON:**
