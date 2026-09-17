@@ -35,3 +35,26 @@ async def create_link(
         amount=amount
     )
     return response
+
+# redirects временные шаблоны
+
+@router.get("/success")
+async def payment_success(
+    invoiceId: Annotated[int, Query(description="Offer invoice id")],
+    status: Annotated[str, Query(description="Payment status")]
+) -> dict:
+    return {"status": status, "invoiceId": invoiceId}
+
+@router.get("/failure")
+async def payment_failure(
+    invoiceId: Annotated[int, Query(description="Offer invoice id")],
+    status: Annotated[str, Query(description="Payment status")]
+) -> dict:
+    return {"status": status, "invoiceId": invoiceId}
+
+@router.get("/cancel")
+async def payment_cancel(
+    invoiceId: Annotated[int, Query(description="Offer invoice id")],
+    status: Annotated[str, Query(description="Payment status")]
+) -> dict:
+    return {"status": status, "invoiceId": invoiceId}
