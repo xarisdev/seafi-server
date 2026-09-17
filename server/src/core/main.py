@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI):
     await websocket_manager.disconnect()
 
 from .config import settings
-from ..api import api_router
+from ..api import router as api_router
 
 app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
 app.include_router(api_router)
