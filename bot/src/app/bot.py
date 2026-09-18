@@ -55,7 +55,7 @@ class TelegramBot(TelegramBotMessage):
         #TODO logging
         user = get_user_model(update)
         result = await web_agent.fetch(
-            url="/api/v1/user",
+            url="/api/v1/users",
             method="POST",
             headers={"Authorization": settings.APP_API_TOKEN},
             json={"username": user.username, "telegram_id": user.telegram_id}
@@ -64,7 +64,7 @@ class TelegramBot(TelegramBotMessage):
             await self.send_message(
                 context,
                 chat_id=user.telegram_id,
-                text="Ошибка регистрации, попробуйте позднее"
+                text="Ошибка регистрации, попробуйте позднее"+str(result.status_code)
                 )
             return
 
@@ -100,7 +100,7 @@ class TelegramBot(TelegramBotMessage):
     async def profile_command(self, update: Update, context):
         user = get_user_model(update)
         result = await web_agent.fetch(
-            url=f"/api/v1/user/{user.telegram_id}",
+            url=f"/api/v1/users/{user.telegram_id}",
             headers={"Authorization": settings.APP_API_TOKEN}
         )
         if result.status_code != 200:
