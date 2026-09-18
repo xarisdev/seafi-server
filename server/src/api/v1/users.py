@@ -17,7 +17,7 @@ from ..dependencies import verify_secret_key
 
 router = APIRouter(tags=["users"], dependencies=[Depends(verify_secret_key)])
 
-@router.post("/user", status_code=status.HTTP_201_CREATED)
+@router.post("/users", status_code=status.HTTP_201_CREATED)
 async def create_user(
     request: UserRegistrationRequest,
     db: Annotated[AsyncSession, Depends(get_db)]
@@ -34,7 +34,7 @@ async def create_user(
 
     return {"status": "success"}
 
-@router.get("/user/{telegram_id}")
+@router.get("/users/{telegram_id}")
 async def get_user(
     telegram_id: int,
     db: Annotated[AsyncSession, Depends(get_db)]

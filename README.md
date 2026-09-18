@@ -4,7 +4,7 @@
 
 ### Работа с пользователями
 <details>
-<summary><code>POST /user</code> - Регистрация</summary>
+<summary><code>POST /users</code> - Регистрация</summary>
 
 **Параметры запроса:**
 | Название | Тип | Описание |
@@ -32,7 +32,7 @@
 </details>
 
 <details>
-<summary><code>GET /user/{telegram_id}</code> - Информация о пользователе</summary>
+<summary><code>GET /users/{telegram_id}</code> - Информация о пользователе</summary>
 
 **Параметры запроса:**
 | Название | Тип | Описание |
@@ -63,7 +63,7 @@
 
 ### Работа с фильтрами
 <details>
-<summary><code>POST /filter/new</code> - Создание фильтра</summary>
+<summary><code>POST /filters/new</code> - Создание фильтра</summary>
 
 Параметры запроса:
 | Название | Тип | Описание |
