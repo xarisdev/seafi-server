@@ -45,10 +45,6 @@
     "Authorization": "secret_key"
 }
 ```
-**Параметры Body:**
-```json
-{}
-```
 **Ответ JSON:**
 ```json
 {
