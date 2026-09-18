@@ -13,3 +13,5 @@ logs/*
 *.db
 
 assets/
+
+mailmap.txt
