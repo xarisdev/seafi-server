@@ -12,7 +12,7 @@ services:
       - ./server/.env
     restart: always
     volumes:
-      - seafi_db:./server
+      - seafi_db:/src/data
 
 volumes:
   seafi_db:
