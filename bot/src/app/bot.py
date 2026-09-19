@@ -58,7 +58,7 @@ class TelegramBotWeb():
         response = await web_agent.fetch(
             url="/api/v1/users",
             method="POST",
-            headers={"Authorization": settings.APP_API_TOKEN},
+            headers={"X-Api-Key": settings.APP_API_TOKEN},
             json={"username": user.username, "telegram_id": user.telegram_id}
         )
         return response
@@ -66,7 +66,7 @@ class TelegramBotWeb():
     async def get_server_user_profile(self, telegram_id) -> UserSchema | int:
         response = await web_agent.fetch(
             url=f"/api/v1/users/{telegram_id}",
-            headers={"Authorization": settings.APP_API_TOKEN}
+            headers={"X-Api-Key": settings.APP_API_TOKEN}
         )
         if response.status_code == 200:
             model = UserSchema(**response.data)
@@ -77,7 +77,7 @@ class TelegramBotWeb():
     async def get_subs_info(self, telegram_id: int):
         response = await web_agent.fetch(
             url=f"/api/v1/payments/products?telegram_id={telegram_id}",
-            headers={"Authorization": settings.APP_API_TOKEN}
+            headers={"X-Api-Key": settings.APP_API_TOKEN}
         )
         ...
 
@@ -120,7 +120,7 @@ class TelegramBot(TelegramBotWeb, TelegramBotMessages, TelegramBotTextHandler):
                 "Профиль\n"
                 f"ID: {result.telegram_id}\n"
                 f"Username: {result.username}\n"
-                f"Создан: {result.created_at.split("T")[0]}\n"
+                f"Создан: {result.created_at.date().isoformat()}\n"
             )
             await self.edit_message(
                 context,
@@ -141,8 +141,9 @@ class TelegramBot(TelegramBotWeb, TelegramBotMessages, TelegramBotTextHandler):
                                     chat_id=user.telegram_id,
                                     text="Вы не зарегистрированы! - /start")
             return
-        await self.send_message(context,
+        await self.edit_message(context,
                                 chat_id=user.telegram_id,
+                                message_id=update.callback_query.message.message_id,
                                 text="Меню:",
                                 reply_markup=get_menu_keyboard())
 

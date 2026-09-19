@@ -1,4 +1,7 @@
-from pydantic import BaseModel
+from typing import Optional
+from pydantic import BaseModel, ConfigDict
+
+from datetime import datetime
 
 class ResponseSchema(BaseModel):
     url: str
@@ -7,8 +10,11 @@ class ResponseSchema(BaseModel):
     error: None | str = None
 
 class UserSchema(BaseModel):
-    id: int
+    model_config = ConfigDict(from_attributes=True)
+
     telegram_id: int
-    username: str
-    created_at: str
-    subscription_id: int | None
+    username: Optional[str]
+    created_at: datetime
+
+    is_premium: bool
+    premium_expires_at: Optional[datetime]

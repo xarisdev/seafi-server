@@ -1,58 +1,73 @@
 from typing import Annotated
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fastapi import (
-    APIRouter,
-    HTTPException, status,
-    Depends
-)
-
-from ...db.database import get_db
-from ...db.models import User, Subscription, Filter
-
-from ..models import FilterCreateRequest
-
+from fastapi import APIRouter, HTTPException, status, Depends
 from ..dependencies import verify_secret_key
 
-router = APIRouter(tags=["filters"], dependencies=[Depends(verify_secret_key)])
+from ...db.database import get_db
+from ...crud.crud_users import crud_users
+from ...crud.crud_filters import crud_filters
+from ...models.user import UserRead
+from ...models.filter import FilterCreate, FilterRead, FilterUpdate
 
-@router.post("/filters/new", status_code=status.HTTP_201_CREATED)
+from ...services.filters_queue import filters_queue
+
+router = APIRouter(prefix="/filters", tags=["Filters"], dependencies=[Depends(verify_secret_key)])
+
+@router.post("/create", response_model=FilterRead, status_code=201)
 async def new_filter(
-    request: FilterCreateRequest,
+    filter_create: FilterCreate,
     db: Annotated[AsyncSession, Depends(get_db)]
-) -> dict[str, str]:
-    user_result = await db.execute(select(User).where(User.telegram_id == request.telegram_id))
-    user = user_result.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+):
+    telegram_id_row = await crud_filters.exists(db=db, telegram_id=filter_create.telegram_id)
+    if telegram_id_row:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Filter already exists"
+        )
 
-    sub_result = await db.execute(select(Subscription).where(Subscription.id == user.subscription_id))
-    subscription = sub_result.scalar_one_or_none()
-    if not subscription or not subscription.active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No active subscription")
+    created_filter = await crud_filters.create(db=db, object=filter_create, return_as_model=FilterRead)
+    return created_filter
 
-    if subscription.filter_id:
-        filter_result = await db.execute(select(Filter).where(Filter.id == subscription.filter_id))
-        existing_filter = filter_result.scalar_one_or_none()
+@router.patch("/patch", response_model=FilterRead, status_code=202)
+async def patch_filter(
+    filter_update: FilterUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)]
+):
+    db_filter = await crud_filters.exists(db=db, telegram_id=filter_update.telegram_id)
+    if not db_filter:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Filter not found"
+        )
 
-        if existing_filter:
-            existing_filter.price_min = request.price_min
-            existing_filter.price_max = request.price_max
-            existing_filter.owner = request.owner
-            await db.flush()
-            return {"status": "success"}
-
-    new_filter = Filter(
-        price_min=request.price_min,
-        price_max=request.price_max,
-        owner=request.owner
+    user: UserRead = await crud_users.get(
+        db=db,
+        schema_to_select=UserRead,
+        one_or_none=True,
+        telegram_id=filter_update.telegram_id
     )
-    db.add(new_filter)
-    await db.flush()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
 
-    subscription.filter_id = new_filter.id
-    await db.flush()
+    if not user.is_premium: # TODO:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Permission denied"
+        )
 
-    return {"status": "success"}
+    updated_filter: FilterRead = await crud_filters.update(
+        db=db,
+        object=filter_update,
+        telegram_id=filter_update.telegram_id
+    )
+    if updated_filter.price_min != -1:
+        await filters_queue.add_filter(updated_filter.id)
+    else:
+        await filters_queue.remove_filter(updated_filter.id)
+
+    return updated_filter
