@@ -1,10 +1,9 @@
 import json
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
-def get_menu_keyboard(sub: bool):
-    status_text = "" if sub else ""
+def get_menu_keyboard():
     keyboard = [
-        [InlineKeyboardButton(status_text, callback_data=json.dumps({"a": "sub_info"}))],
+        [InlineKeyboardButton("Подписка", callback_data=json.dumps({"a": "sub_info"}))],
         [InlineKeyboardButton("Настроить фильтр", callback_data=json.dumps({"a": "set_filter"}))],
         [InlineKeyboardButton("Профиль", callback_data=json.dumps({"a": "view_prof"}))]
     ]

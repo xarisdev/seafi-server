@@ -5,7 +5,7 @@ from websockets.asyncio.client import connect
 
 from typing import Any
 
-from ..models.web import Response
+from ..models.web import ResponseSchema
 from ..app.config import settings
 
 class WebAgent:
@@ -62,13 +62,13 @@ class WebAgent:
             else:
                 data = response.text        
 
-            result = Response(
+            result = ResponseSchema(
                 url=url,
                 status_code=response.status_code,
                 data=data 
             )
         except Exception as e:
-            result = Response(url=url, error=str(e))
+            result = ResponseSchema(url=url, error=str(e))
 
         return result
 
