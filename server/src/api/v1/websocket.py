@@ -1,12 +1,10 @@
 from typing import Annotated
 
-from fastapi import (
-    APIRouter, Query, status,
-    WebSocket, WebSocketDisconnect
-)
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, status
+
+from ...core.config import settings
 
 from ...services.websocket import websocket_manager
-from ...core.config import settings
 
 router = APIRouter(tags=["tunnel"])
 

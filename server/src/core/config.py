@@ -11,6 +11,8 @@ class Application(BaseSettings):
     APP_TOKEN: str
     ADMIN_ID: int
 
+    LOCALHOST: str
+
     model_config = SettingsConfigDict(
         env_file=ENV_PATH,
         env_file_encoding="utf-8"

@@ -1,12 +1,12 @@
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status, Depends, Query
+from ..dependencies import verify_secret_key
 
 from ..models import CreatePaymentLinkSchema
 from ...core.config import settings
-from ...integrations.lava_payments import get_my_products, generate_payment_link
 
-from ..dependencies import verify_secret_key
+from ...integrations.lava_payments import get_my_products, generate_payment_link
 
 router = APIRouter(prefix="/payments", tags=["payments"], dependencies=[Depends(verify_secret_key)])
 
