@@ -5,6 +5,12 @@ from fastapi import FastAPI
 from ..services.websocket import websocket_manager
 from ..services.notifications_queue import notification_queue
 
+from .config import settings
+from ..api import router as api_router
+
+from . import logger
+from .middlewares import LoggingMiddleware
+
 from contextlib import asynccontextmanager
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -20,8 +26,7 @@ async def lifespan(app: FastAPI):
     notification_queue_worker.cancel()
     await websocket_manager.disconnect()
 
-from .config import settings
-from ..api import router as api_router
-
 app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
+app.add_middleware(LoggingMiddleware)
+
 app.include_router(api_router)
