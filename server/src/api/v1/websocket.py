@@ -6,7 +6,7 @@ from ...core.config import settings
 
 from ...services.websocket import websocket_manager
 
-router = APIRouter(tags=["tunnel"])
+router = APIRouter(tags=["Tunnel"])
 
 @router.websocket("/ws/connect")
 async def connect_weboskcet(
