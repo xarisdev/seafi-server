@@ -3,7 +3,6 @@ from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi import APIRouter, HTTPException, status, Depends
-from ..dependencies import verify_secret_key
 
 from ...db.database import get_db
 from ...crud.crud_users import crud_users
@@ -13,7 +12,7 @@ from ...models.filter import FilterCreate, FilterRead, FilterUpdate
 
 from ...services.filters_queue import filters_queue
 
-router = APIRouter(prefix="/filters", tags=["Filters"], dependencies=[Depends(verify_secret_key)])
+router = APIRouter(prefix="/filters", tags=["Filters"])
 
 @router.post("/create", response_model=FilterRead, status_code=201)
 async def new_filter(

@@ -3,14 +3,13 @@ from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi import APIRouter, HTTPException, Depends
-from ..dependencies import verify_secret_key
 
 from ...db.database import get_db
 from ...crud.crud_users import crud_users
 from ...crud.crud_filters import crud_filters
 from ...models.filter import FilterRead
 
-router = APIRouter(prefix="/internal", tags=["Internal"], dependencies=[Depends(verify_secret_key)])
+router = APIRouter(prefix="/internal", tags=["Internal"])
 
 @router.get("/task/{filter_id}", response_model=FilterRead)
 async def get_task(

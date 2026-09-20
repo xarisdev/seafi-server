@@ -1,14 +1,21 @@
 import httpx
+import logging
 
 from typing import Any
 
 from ..core.config import settings
 from ..models.lava import ProductSchema
 
+from ..models.subscription import SubscriptionRead
+
+from ..core.exceptions.http_exceptions import HTTPException
+
+logger = logging.getLogger(__name__)
+
 API_V2_PRODUCTS_URL = settings.LAVA_API_URL+"/v2/products?feedVisibility=ALL"
 API_V3_INVOICE_URL = settings.LAVA_API_URL+"/v3/invoice"
 
-async def get_my_products() -> dict[str, Any]:
+async def get_my_products() -> list[ProductSchema]:
     headers = {"X-Api-Key": settings.LAVA_API_KEY}
 
     async with httpx.AsyncClient() as client:
@@ -19,61 +26,90 @@ async def get_my_products() -> dict[str, Any]:
                 timeout=10.0
             )
             if response.status_code not in [200, 201]:
-                return {"status": "failed", "msg": "GET products error"}
+                error_msg = f"Lava.top returned unexpected status: {response.status_code}"
 
-            data = response.json()
+                logger.error(error_msg)
+                raise HTTPException(
+                    status_code=500,
+                    detail=error_msg
+                )
+
+            data: dict = response.json()
+            product_schemas: list[ProductSchema] = []
+
             if data:
-                products: list[ProductSchema] = []
-                items: list[dict] = data.get("items", [])
+                data_items: list[dict] = data.get("items", [])
 
-                for product in items:
+                for product in data_items:
                     offers = product.get("offers")
                     if not offers:
                         continue
 
-                    include_offer = offers[0]
-                    schema = ProductSchema(
-                        **product,
+                    product_title = product.get("title")
+                    if "/ seafi" not in product_title:
+                        continue
+
+                    include_offer: dict = offers[0]
+                    product_schema = ProductSchema(
+                        id=product.get("id"),
+                        title=product_title,
+                        description=product.get("description"),
                         offer_id=include_offer.get("id"),
-                        offer_name=include_offer.get("name")
+                        offer_name=include_offer.get("name"),
+                        offer_description=include_offer.get("description")
                     )
-                    if "/ seafi" in schema.title:
-                        products.append(schema)
+                    product_schemas.append(product_schema)
 
-                result = {
-                    "status": "success",
-                    "products": [schema.model_dump() for schema in products]
-                }
-                return result
+                return product_schemas
+                
+            else:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Products not found"
+                )
+            
         except httpx.RequestError:
-            return {"status": "failed", "msg": "Network error"}
-        except:
-            raise
+            error_msg = "Bad Request integrated service. (Lava.top)"
+            logger.error(error_msg, exc_info=True)
+            raise HTTPException(
+                status_code=502,
+                detail=error_msg
+            )
 
+        except httpx.TimeoutException:
+            error_msg = "Response timeout error. (Lava.top)"
 
-async def generate_payment_link(
-    telegram_id: int,
-    offerId: str,
-    amount: float,
-    currency: str = "USD",
-    successful_return_url: str = f"{settings.REDIRECT_URL}",
-    failure_return_url: str = f"{settings.REDIRECT_URI}/failure",
-    cancel_return_url: str = f"{settings.REDIRECT_URI}/cancel"
-) -> dict[str, str]:
+            logger.error(error_msg, exc_info=True)
+            raise HTTPException(
+                status_code=504,
+                detail=error_msg
+            )
+
+        except Exception:
+            error_msg = "Unexcepted Exception"
+
+            logger.error(error_msg, exc_info=True)
+            raise HTTPException(
+                status_code=500,
+                detail=error_msg
+            )
+
+async def create_payment_link(telegram_id: int, subscription: SubscriptionRead):
     payload_schema = {
         "email": f"user_{telegram_id}@xaris.tech",
-        "offerId": offerId,
-        "currency": currency,
-        "amount": amount,
-        "successful_return_url": successful_return_url,
-        "failure_return_url": failure_return_url,
-        "cancel_return_url": cancel_return_url
+        "offerId": subscription.offer_id,
+        "currency": "USD",
+        "amount": subscription.amount,
+        "successful_return_url": f"{settings.REDIRECT_URL}",
+        "failure_return_url": f"{settings.REDIRECT_URL}/failure",
+        "cancel_return_url": f"{settings.REDIRECT_URL}/cancel"
     }
     payload_headers = {
         "Accept": "application/json",
-        "X-Api-Key": settings.LAVA_API_KEY,
+        "X-Api_key": settings.LAVA_API_KEY,
         "Content-Type": "application/json"
     }
+    payment_timeout_s = 15 * 60
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(
@@ -83,12 +119,45 @@ async def generate_payment_link(
                 timeout=10.0
             )
             if response.status_code not in [200, 201]:
-                return {"status": "failed", "msg": response.text}
+                error_msg = f"Lava.top returned unexpected status: {response.status_code}"
 
+                logger.error(error_msg)
+                raise HTTPException(
+                    status_code=500,
+                    detail=error_msg
+                )
             invoice = response.json()
-            return {
-                "status": "success",
-                "invoice": invoice
-            }
-        except httpx.RequestError as exc:
-            return {"status": "failed", "msg": "Network error"}
+            invoice["payment_timeout_s"] = payment_timeout_s
+
+            return invoice
+
+        except httpx.RequestError:
+            error_msg = "Bad Request integrated service. (Lava.top)"
+            logger.error(error_msg, exc_info=True)
+            raise HTTPException(
+                status_code=502,
+                detail=error_msg
+            )
+
+        except httpx.TimeoutException:
+            error_msg = "Response timeout error. (Lava.top)"
+
+            logger.error(error_msg, exc_info=True)
+            raise HTTPException(
+                status_code=504,
+                detail=error_msg
+            )
+
+        except Exception:
+            error_msg = "Unexcepted Exception"
+
+            logger.error(error_msg, exc_info=True)
+            raise HTTPException(
+                status_code=500,
+                detail=error_msg
+            )
+
+from ..api.models import WebhookEventPayment, WebhookEventRefund
+
+async def handle_webhook(webhook: WebhookEventPayment | WebhookEventRefund):
+    webhook.event_type

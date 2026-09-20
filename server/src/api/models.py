@@ -10,6 +10,9 @@ class FilterCreateRequest(BaseModel):
     price_max: int = 0
     owner: str = "all"
 
-class CreatePaymentLinkSchema(BaseModel):
-    telegram_id: int
-    comment: str
+class PaymentLinkSchema(BaseModel):
+    id: str
+    status: str
+    amountTotal: dict
+    paymentUrl: str
+    payment_timeout_s: int

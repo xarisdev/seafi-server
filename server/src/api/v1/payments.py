@@ -1,40 +1,40 @@
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, HTTPException, status, Depends, Query
-from ..dependencies import verify_secret_key
+from sqlalchemy.ext.asyncio import AsyncSession
+from ...db.database import get_db
 
-from ..models import CreatePaymentLinkSchema
-from ...core.config import settings
+from fastapi import APIRouter, Depends, Query
+from ...core.exceptions.http_exceptions import NotFoundException
 
-from ...integrations.lava_payments import get_my_products, generate_payment_link
+from ..models import PaymentLinkSchema
 
-router = APIRouter(prefix="/payments", tags=["payments"], dependencies=[Depends(verify_secret_key)])
+from ...crud.crud_subscriptions import crud_subscriptions
 
-@router.get("/products")
-async def get_products(telegram_id: Annotated[Optional[int], Query(description="Administrator ID")] = None):
-    if telegram_id != settings.ADMIN_ID:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden"
-        )
-    products = await get_my_products()
-    if products:
-        return products
-    
-    return {"status": "error", "msg": "No data received"}
+from ...integrations.lava_payments import create_payment_link
 
-@router.post("/create-link")
+router = APIRouter(prefix="/payments", tags=["payments"])
+
+# link
+# payment timeout
+
+@router.post("/create-link/{subscription_id}", response_model=PaymentLinkSchema)
 async def create_link(
-    request: CreatePaymentLinkSchema,
-    offerId: Annotated[str, Query(description="Lava.top OfferId")],
-    amount: Annotated[float, Query(description="Lava.top offer amount in USD")]
-    ):
-    response = await generate_payment_link(
-        telegram_id=request.telegram_id,
-        offerId=offerId,
-        amount=amount
-    )
-    return response
+    subscription_id: int,
+    telegram_id: Annotated[int, Query(alias="telegram_id")],
+    db: Annotated[AsyncSession, Depends(get_db)]
+):
+    subscription = await crud_subscriptions.get(db=db, id=subscription_id)
+    if not subscription:
+        raise NotFoundException("Subscription not found")
+
+    payment_data = create_payment_link(telegram_id, subscription)
+    schema = PaymentLinkSchema(**payment_data)
+
+    return schema
+
+#
+#
+#
 
 # redirects временные шаблоны
 
