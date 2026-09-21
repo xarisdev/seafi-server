@@ -12,7 +12,7 @@ from ...crud.crud_subscriptions import crud_subscriptions
 
 from ...integrations.lava_payments import create_payment_link
 
-router = APIRouter(prefix="/payments", tags=["payments"])
+router = APIRouter(prefix="/payments", tags=["Payments"])
 
 # link
 # payment timeout
