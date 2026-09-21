@@ -1,4 +1,13 @@
 MESSAGES = {
+    "reg_error": "Необходима авторизация. /start",
+    "web_error": "Произошла сетевая ошибка.\n\nПопробуйте еще раз позднее или обратитесь в поддержку: @xarisssupport\n\nDetail: --detail",
+
+    "language": {
+        "message": "Выберите язык\n___\nSelect language",
+        "btn_lang_ru": "Русский RU",
+        "btn_lang_kg": "Кыргызча KG",
+        "btn_lang_en": "English EN",
+    },
     "ru": {
         "welcome": "Добро пожаловать!",
         "menu": "Меню:",
@@ -23,9 +32,22 @@ MESSAGES = {
     }
 }
 
+def get_reg_error() -> str: return MESSAGES.get("reg_error")
+def get_web_error() -> str: return MESSAGES.get("web_error")
+
+def get_lang(key: str) -> str:
+    """
+    Text key format: `message/btn_lang_code`
+
+    Supported code's: `ru`, `-`, `-`
+    """
+    data: dict = MESSAGES.get("language")
+    text = data.get(key)
+    return text
+
 def get_text(key: str, lang: str = "ru") -> str:
     """
-    Supported language: `RU`\n
+    Supported language: `ru`, `-`, `-`\n
     Text key format: `"key1-key2-key3-..."`
 
     ### Fixed keys (key1)

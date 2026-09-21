@@ -5,20 +5,29 @@ from telegram import (
     )
 
 from telegram.ext import (
-    ApplicationBuilder, ContextTypes,
+    ApplicationBuilder, PicklePersistence,
+    ContextTypes,
     CommandHandler, MessageHandler, CallbackQueryHandler,
     filters
 )
 
-from .config import settings
+from .config import settings, PERSISTENCE_PATH
 
 from ..scripts.web_agent import web_agent
-from ..scripts.users import get_user_model
 
+from ..models.user import User
 from ..models.web import UserSchema
 
-from .localization import get_text
-from .inline_keyboard import get_menu_keyboard, get_back_menu
+from .localization import get_text, get_lang, get_web_error, get_reg_error
+from .inline_keyboard import get_language_keyboard, get_menu_keyboard, get_back_menu
+
+def get_user_model(update: Update, lang = None) -> User:
+    model = User(
+        telegram_id=update.effective_user.id,
+        username=update.effective_user.username,
+        language=lang
+    )
+    return model
 
 class TelegramBotMessages():
     #TODO logging
@@ -55,24 +64,33 @@ class TelegramBotTextHandler():
         print(f"{user.username} [{user.telegram_id}]: {update.message.text}")
 
 class TelegramBotWeb():
-    async def registration_user(self, user: UserSchema):
+    async def registration_user(self, telegram_id: int, username: str) -> UserSchema | int:
         response = await web_agent.fetch(
             url="/api/v1/users",
             method="POST",
             headers={"X-Api-Key": settings.APP_API_TOKEN},
-            json={"username": user.username, "telegram_id": user.telegram_id}
+            json={"username": username, "telegram_id": telegram_id}
         )
-        return response
+        if response.status_code == 201:
+            return UserSchema(**response.data)
+        return response.status_code
     
-    async def get_server_user_profile(self, telegram_id) -> UserSchema | int:
+    async def get_server_user_profile(self, telegram_id: int) -> UserSchema | int:
         response = await web_agent.fetch(
             url=f"/api/v1/users/{telegram_id}",
             headers={"X-Api-Key": settings.APP_API_TOKEN}
         )
         if response.status_code == 200:
-            model = UserSchema(**response.data)
-            return model
-        
+            return UserSchema(**response.data)
+        return response.status_code
+
+    async def patch_user(self, telegram_id: int, **kwargs) -> bool | int:
+        response = await web_agent.fetch(
+            url=f"/api/v1/users/{telegram_id}",
+            method="PATCH",
+            headers={"X-Api-Key": settings.APP_API_TOKEN},
+            json=kwargs
+        )
         return response.status_code
 
     async def get_subs_info(self, telegram_id: int):
@@ -86,28 +104,61 @@ class TelegramBot(TelegramBotWeb, TelegramBotMessages, TelegramBotTextHandler):
     def __init__(self):
         super().__init__()
 
+    def _user_lang(self, context: ContextTypes.DEFAULT_TYPE) -> str:
+        return context.user_data.get("lang", "ru")
+
+    def _user_authenticator(self, context: ContextTypes.DEFAULT_TYPE) -> bool:
+        return context.user_data.get("is_auth", False)
+
+    async def get_user(self, update: Update, context: ContextTypes.DEFAULT_TYPE, reg=False):
+        is_auth = self._user_authenticator(context)
+        if not is_auth and reg == False:
+            await self.send_message(context,
+                              chat_id=update.effective_user.id,
+                              text=get_reg_error())
+            return is_auth
+
+        user = get_user_model(update, self._user_lang(context))
+        return user
+
+    async def web_error(self, context: ContextTypes.DEFAULT_TYPE, chat_id: int, detail):
+        await self.send_message(context,
+                                chat_id=chat_id,
+                                text=get_web_error().replace("--detail", str(detail)))
+
     # --- callback ---
 
     async def callback_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
         await query.answer()
 
+        user = await self.get_user(update, context)
+        if not user:
+            print("404")
+
         try:
             callback_data = json.loads(query.data)
             action = callback_data.get("data")
 
             match action:
+                # --- language ---
+                case "lang_ru":
+                    await self.select_language(update, context, lang=action)
+
+                case "lang_kg": pass
+                case "lang_en": pass
+
                 case "sub_info":
-                    await self.sub_query(update, context)
+                    await self.sub_query(update, context, user)
 
                 case "set_filter":
                     pass
 
                 case "view_prof":
-                    await self.profile_query(update, context)
+                    await self.profile_query(update, context, user)
 
                 case "set_menu":
-                    await self.menu_query(update, context)
+                    await self.menu_query(update, context, user)
 
                 case _:
                     pass
@@ -117,9 +168,9 @@ class TelegramBot(TelegramBotWeb, TelegramBotMessages, TelegramBotTextHandler):
 
     # --- query ---
 
-    async def profile_query(self, update: Update, context):
-        user = get_user_model(update)
+    async def profile_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user: User):
         result = await self.get_server_user_profile(user.telegram_id)
+
         if isinstance(result, UserSchema):
             text = (
                 "Профиль\n"
@@ -135,11 +186,10 @@ class TelegramBot(TelegramBotWeb, TelegramBotMessages, TelegramBotTextHandler):
                 reply_markup=get_back_menu()
             )
 
-    async def sub_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def sub_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user: User):
         pass
 
-    async def menu_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user = get_user_model(update)
+    async def menu_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user: User):
         result = await self.get_server_user_profile(user.telegram_id)
         if result == 404:
             await self.send_message(context,
@@ -155,27 +205,68 @@ class TelegramBot(TelegramBotWeb, TelegramBotMessages, TelegramBotTextHandler):
     # --- /commands ---
     
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user = get_user_model(update)
+        user = await self.get_user(update, context, reg=True)
+        if not user: return
 
-        response = await self.registration_user(user)
-        if response.status_code in [201, 409]:
-            await self.send_message(context,
-                                    chat_id=user.telegram_id,
-                                    text="Добро пожаловать! Меню:",
-                                    reply_markup=get_menu_keyboard())
+        text = ""
+        reply_markup = None
+
+        model = await self.registration_user(telegram_id=user.telegram_id, username=user.username)
+        if isinstance(model, UserSchema):
+            context.user_data["is_auth"] = True
+            text = get_lang("message")
+            reply_markup = get_language_keyboard()
         else:
-            await self.send_message(context,
-                                    chat_id=user.telegram_id,
-                                    text="Ошибка регистрации, попробуйте позднее.")
+            if model == 409:
+                db_model = await self.get_server_user_profile(user.telegram_id)
+                if isinstance(db_model, UserSchema):
+                    user.language = db_model.language
+                    context.user_data["lang"] = user.language
+                    context.user_data["is_auth"] = True
+
+                    if not user.language:
+                        text = get_lang("message")
+                        reply_markup = get_language_keyboard()
+                    else:
+                        text = get_text("menu", lang=user.language)
+                        reply_markup = get_menu_keyboard(user.language)
+                else:
+                    await self.web_error(context, user.telegram_id, detail=db_model)
+                    return
+            else:
+                await self.web_error(context, user.telegram_id, detail=model)
+                return
+
+        await self.send_message(context=context,
+                                chat_id=user.telegram_id,
+                                text=text,
+                                reply_markup=reply_markup)
 
     async def menu_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user = get_user_model(update)
+        user = await self.get_user(update, context)
+        if not user: return
+        #
+        #await self.send_message(context,
+        #                        chat_id=user.telegram_id,
+        #                        text="Меню:",
+        #                        reply_markup=get_menu_keyboard())
 
+    # --- scripts ---
+
+    async def select_language(self, update: Update, context: ContextTypes.DEFAULT_TYPE, lang: str):
+        language_code = lang.split('_')[1]
+        telegram_id = update.effective_user.id
+
+        result = await self.patch_user(telegram_id=telegram_id, language=language_code)
+        if result != 202:
+            await self.web_error(context, telegram_id, detail=result)
+            return
+
+        context.user_data["lang"] = language_code
         await self.send_message(context,
-                                chat_id=user.telegram_id,
-                                text="Меню:",
-                                reply_markup=get_menu_keyboard())
-
+                                chat_id=telegram_id,
+                                text=get_text('menu', lang=language_code),
+                                reply_markup=get_menu_keyboard(language_code))
 
 async def on_startup(application) -> None:
     await web_agent.init_client()
@@ -184,6 +275,8 @@ async def on_shutdown(application) -> None:
 
 # bot
 bot = TelegramBot()
+
+persistence = PicklePersistence(PERSISTENCE_PATH)
 
 # handlers
 start_command_handler = CommandHandler("start", bot.start_command)
@@ -194,6 +287,7 @@ callback_handler = CallbackQueryHandler(bot.callback_handler)
 app = (
     ApplicationBuilder()
     .token(settings.TELEGRAM_BOT_TOKEN)
+    .persistence(persistence)
     .post_init(on_startup)
     .post_shutdown(on_shutdown)
     .build()

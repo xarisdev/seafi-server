@@ -16,5 +16,7 @@ class UserSchema(BaseModel):
     username: Optional[str]
     created_at: datetime
 
+    language: Optional[str]
+
     is_premium: bool
     premium_expires_at: Optional[datetime]
