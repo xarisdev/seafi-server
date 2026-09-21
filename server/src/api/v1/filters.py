@@ -26,7 +26,7 @@ async def new_filter(
             detail="Filter already exists"
         )
 
-    created_filter = await crud_filters.create(db=db, object=filter_create, return_as_model=FilterRead)
+    created_filter = await crud_filters.create(db=db, object=filter_create, return_as_model=True, schema_to_select=FilterRead)
     return created_filter
 
 @router.patch("/patch", response_model=FilterRead, status_code=202)

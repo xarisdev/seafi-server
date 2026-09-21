@@ -19,7 +19,12 @@ async def create_subscription(
     db: Annotated[AsyncSession, Depends(get_db)],
     admin_auth: Annotated[str, Depends(verify_admin_key)]
 ):
-    created_subscription = await crud_subscriptions.create(db=db, object=subscription, return_as_model=SubscriptionRead)
+    created_subscription = await crud_subscriptions.create(
+        db=db,
+        object=subscription,
+        return_as_model=True,
+        schema_to_select=SubscriptionRead
+    )
 
     return created_subscription
 

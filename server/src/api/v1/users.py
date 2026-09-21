@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 
 from ...db.database import get_db
 from ...crud.crud_users import crud_users
-from ...models.user import UserCreate, UserRead
+from ...models.user import UserCreate, UserRead, UserUpdate
 
 router = APIRouter(tags=["Users"])
 
@@ -19,7 +19,7 @@ async def create_user(
     if telegram_id_row:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Already exists")
 
-    created_user = await crud_users.create(db=db, object=user, return_as_model=UserRead)
+    created_user = await crud_users.create(db=db, object=user, return_as_model=True, schema_to_select=UserRead)
     return created_user
 
 @router.get("/users/{telegram_id}", response_model=UserRead)
@@ -37,3 +37,15 @@ async def get_user(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     return user
+
+@router.patch("/users/{telegram_id}", status_code=202)
+async def patch_user(
+    telegram_id: int,
+    data: UserUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)]
+):
+    await crud_users.update(
+        db=db,
+        object=data,
+        telegram_id=telegram_id
+    )

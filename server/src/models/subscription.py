@@ -28,10 +28,10 @@ class SubscriptionCreate(BaseModel):
 
 class SubscriptionUpdate(BaseModel):
     id: int
-    title: Optional[str]
-    description: Optional[str]
-    amount: Optional[float]
-    duration_hours: Optional[int]
+    title: Optional[str] = None
+    description: Optional[str] = None
+    amount: Optional[float] = None
+    duration_hours: Optional[int] = None
 
 class SubscriptionRead(BaseModel):
     id: int
