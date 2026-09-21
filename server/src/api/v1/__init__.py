@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 # routers
 from .filters import router as filter_fouter
 from .internal import router as internal_router
@@ -9,7 +9,7 @@ from .websocket import router as ws_router
 
 from ..dependencies import verify_secret_key
 
-verify_router = APIRouter(dependencies=[verify_secret_key])
+verify_router = APIRouter(dependencies=[Depends(verify_secret_key)])
 verify_router.include_router(filter_fouter)
 verify_router.include_router(internal_router)
 verify_router.include_router(payment_router)
