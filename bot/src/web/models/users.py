@@ -3,12 +3,6 @@ from pydantic import BaseModel, ConfigDict
 
 from datetime import datetime
 
-class ResponseSchema(BaseModel):
-    url: str
-    status_code: int | None = None
-    data: dict | str | None = None
-    error: None | str = None
-
 class UserSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

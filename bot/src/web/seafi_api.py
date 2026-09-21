@@ -1,0 +1,54 @@
+from .client import web_client
+
+from .models.users import UserSchema
+from ..app.config import settings
+
+class SeafiAPI():
+    def __init__(self):
+        self.auth_header = {"X-Api-Key": settings.APP_API_TOKEN}
+
+    async def init_client(self):
+        await web_client.init_client()
+    async def close_client(self):
+        await web_client.close_client()
+
+    # --- users ---
+
+    async def create_user(self, telegram_id: int, username: str) -> UserSchema | int:
+        response = await web_client.fetch(
+            url="/api/v1/users",
+            method="POST",
+            headers=self.auth_header,
+            json={"username": username, "telegram_id": telegram_id}
+        )
+        if response.status_code == 201:
+            return UserSchema(**response.data)
+        return response.status_code
+    
+    async def get_user(self, telegram_id: int) -> UserSchema | int:
+        response = await web_client.fetch(
+            url=f"/api/v1/users/{telegram_id}",
+            headers=self.auth_header
+        )
+        if response.status_code == 200:
+            return UserSchema(**response.data)
+        return response.status_code
+
+    async def patch_user(self, telegram_id: int, **kwargs) -> bool | int:
+        response = await web_client.fetch(
+            url=f"/api/v1/users/{telegram_id}",
+            method="PATCH",
+            headers=self.auth_header,
+            json=kwargs
+        )
+        return response.status_code
+
+    # --- subscriptions ---
+
+    async def get_subscriptions(self, telegram_id: int):
+        response = await web_client.fetch(
+            url=f"/api/v1/payments/products?telegram_id={telegram_id}"
+        )
+        return response.status_code
+
+seafi_api = SeafiAPI()

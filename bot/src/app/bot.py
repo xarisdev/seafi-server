@@ -13,10 +13,10 @@ from telegram.ext import (
 
 from .config import settings, PERSISTENCE_PATH
 
-from ..scripts.web_agent import web_agent
+from ..web.seafi_api import seafi_api
 
 from ..models.user import User
-from ..models.web import UserSchema
+from ..web.models.users import UserSchema
 
 from .localization import get_text, get_lang, get_web_error, get_reg_error
 from .inline_keyboard import get_language_keyboard, get_menu_keyboard, get_back_menu
@@ -63,44 +63,7 @@ class TelegramBotTextHandler():
         user = get_user_model(update)
         print(f"{user.username} [{user.telegram_id}]: {update.message.text}")
 
-class TelegramBotWeb():
-    async def registration_user(self, telegram_id: int, username: str) -> UserSchema | int:
-        response = await web_agent.fetch(
-            url="/api/v1/users",
-            method="POST",
-            headers={"X-Api-Key": settings.APP_API_TOKEN},
-            json={"username": username, "telegram_id": telegram_id}
-        )
-        if response.status_code == 201:
-            return UserSchema(**response.data)
-        return response.status_code
-    
-    async def get_server_user_profile(self, telegram_id: int) -> UserSchema | int:
-        response = await web_agent.fetch(
-            url=f"/api/v1/users/{telegram_id}",
-            headers={"X-Api-Key": settings.APP_API_TOKEN}
-        )
-        if response.status_code == 200:
-            return UserSchema(**response.data)
-        return response.status_code
-
-    async def patch_user(self, telegram_id: int, **kwargs) -> bool | int:
-        response = await web_agent.fetch(
-            url=f"/api/v1/users/{telegram_id}",
-            method="PATCH",
-            headers={"X-Api-Key": settings.APP_API_TOKEN},
-            json=kwargs
-        )
-        return response.status_code
-
-    async def get_subs_info(self, telegram_id: int):
-        response = await web_agent.fetch(
-            url=f"/api/v1/payments/products?telegram_id={telegram_id}",
-            headers={"X-Api-Key": settings.APP_API_TOKEN}
-        )
-        ...
-
-class TelegramBot(TelegramBotWeb, TelegramBotMessages, TelegramBotTextHandler):
+class TelegramBot(TelegramBotMessages, TelegramBotTextHandler):
     def __init__(self):
         super().__init__()
 
@@ -169,7 +132,7 @@ class TelegramBot(TelegramBotWeb, TelegramBotMessages, TelegramBotTextHandler):
     # --- query ---
 
     async def profile_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user: User):
-        result = await self.get_server_user_profile(user.telegram_id)
+        result = await seafi_api.get_user(user.telegram_id)
 
         if isinstance(result, UserSchema):
             text = (
@@ -190,12 +153,6 @@ class TelegramBot(TelegramBotWeb, TelegramBotMessages, TelegramBotTextHandler):
         pass
 
     async def menu_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user: User):
-        result = await self.get_server_user_profile(user.telegram_id)
-        if result == 404:
-            await self.send_message(context,
-                                    chat_id=user.telegram_id,
-                                    text="Вы не зарегистрированы! - /start")
-            return
         await self.edit_message(context,
                                 chat_id=user.telegram_id,
                                 message_id=update.callback_query.message.message_id,
@@ -211,14 +168,14 @@ class TelegramBot(TelegramBotWeb, TelegramBotMessages, TelegramBotTextHandler):
         text = ""
         reply_markup = None
 
-        model = await self.registration_user(telegram_id=user.telegram_id, username=user.username)
+        model = await seafi_api.create_user(telegram_id=user.telegram_id, username=user.username)
         if isinstance(model, UserSchema):
             context.user_data["is_auth"] = True
             text = get_lang("message")
             reply_markup = get_language_keyboard()
         else:
             if model == 409:
-                db_model = await self.get_server_user_profile(user.telegram_id)
+                db_model = await seafi_api.get_user(user.telegram_id)
                 if isinstance(db_model, UserSchema):
                     user.language = db_model.language
                     context.user_data["lang"] = user.language
@@ -242,22 +199,13 @@ class TelegramBot(TelegramBotWeb, TelegramBotMessages, TelegramBotTextHandler):
                                 text=text,
                                 reply_markup=reply_markup)
 
-    async def menu_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user = await self.get_user(update, context)
-        if not user: return
-        #
-        #await self.send_message(context,
-        #                        chat_id=user.telegram_id,
-        #                        text="Меню:",
-        #                        reply_markup=get_menu_keyboard())
-
     # --- scripts ---
 
     async def select_language(self, update: Update, context: ContextTypes.DEFAULT_TYPE, lang: str):
         language_code = lang.split('_')[1]
         telegram_id = update.effective_user.id
 
-        result = await self.patch_user(telegram_id=telegram_id, language=language_code)
+        result = await seafi_api.patch_user(telegram_id=telegram_id, language=language_code)
         if result != 202:
             await self.web_error(context, telegram_id, detail=result)
             return
@@ -269,9 +217,9 @@ class TelegramBot(TelegramBotWeb, TelegramBotMessages, TelegramBotTextHandler):
                                 reply_markup=get_menu_keyboard(language_code))
 
 async def on_startup(application) -> None:
-    await web_agent.init_client()
+    await seafi_api.init_client()
 async def on_shutdown(application) -> None:
-    await web_agent.close_client()
+    await seafi_api.close_client()
 
 # bot
 bot = TelegramBot()
@@ -280,7 +228,6 @@ persistence = PicklePersistence(PERSISTENCE_PATH)
 
 # handlers
 start_command_handler = CommandHandler("start", bot.start_command)
-menu_command_handler = CommandHandler("menu", bot.menu_command)
 callback_handler = CallbackQueryHandler(bot.callback_handler)
 
 # app
@@ -294,5 +241,4 @@ app = (
 )
 
 app.add_handler(start_command_handler)
-app.add_handler(menu_command_handler)
 app.add_handler(callback_handler)

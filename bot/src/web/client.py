@@ -5,10 +5,12 @@ from websockets.asyncio.client import connect
 
 from typing import Any
 
-from ..models.web import ResponseSchema
+from .models.schemas import ResponseSchema
+
+from .models.schemas import ResponseSchema
 from ..app.config import settings
 
-class WebAgent:
+class WebClient:
     def __init__(self):
         self.client: httpx.AsyncClient | None = None
         self.wss_task: asyncio.Task | None = None
@@ -47,15 +49,21 @@ class WebAgent:
             self.wss_task.cancel()
             self.wss_task = None
 
-    async def fetch(self, url: str, method: str = "GET", **kwargs: Any):
+    async def fetch(
+            self,
+            url: str,
+            method: str = "GET",
+            headers: httpx._types.HeaderTypes = None,
+            **kwargs: Any
+        ) -> ResponseSchema | None:
         """
-        Принимает аргументы httpx.AsyncClient.request (json, params, headers, ...)
+        Принимает аргументы httpx.AsyncClient.request (json, params, ...)
         """
         if not self.client:
             return
 
         try:
-            response = await self.client.request(method=method, url=url, **kwargs)
+            response = await self.client.request(method=method, url=url, headers=headers, **kwargs)
 
             if "application/json" in response.headers.get("content-type", ""):
                 data = response.json()
@@ -72,4 +80,4 @@ class WebAgent:
 
         return result
 
-web_agent = WebAgent()
+web_client = WebClient()
