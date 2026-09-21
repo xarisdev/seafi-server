@@ -157,7 +157,7 @@ async def create_payment_link(telegram_id: int, subscription: SubscriptionRead):
                 detail=error_msg
             )
 
-from ..api.models import WebhookEventPayment, WebhookEventRefund
+from ..models.webhook import WebhookEventPayment, WebhookEventRefund
 
 async def handle_webhook(webhook: WebhookEventPayment | WebhookEventRefund):
     webhook.event_type
