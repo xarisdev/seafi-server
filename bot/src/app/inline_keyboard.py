@@ -1,15 +1,39 @@
-import json
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
-def get_menu_keyboard():
+from json import dumps
+from .localization import get_text
+
+def get_menu_keyboard(lang: str = "ru"):
+    buttons_data = [
+        {"action": "sub_info"},
+        {"action": "set_filter"},
+        {"action": "view_prof"}
+    ]
     keyboard = [
-        [InlineKeyboardButton("Подписка", callback_data=json.dumps({"a": "sub_info"}))],
-        [InlineKeyboardButton("Настроить фильтр", callback_data=json.dumps({"a": "set_filter"}))],
-        [InlineKeyboardButton("Профиль", callback_data=json.dumps({"a": "view_prof"}))]
+        [
+            InlineKeyboardButton(
+                text=get_text(f"buttons-{btn.get('action')}", lang=lang),
+                callback_data=dumps({"data": btn.get('action')})
+            )
+        ]
+        for btn in buttons_data
     ]
     return InlineKeyboardMarkup(keyboard)
 
-
-def get_back_menu():
-    keyboard = [[InlineKeyboardButton("В меню", callback_data=json.dumps({"a": "set_menu"}))]]
+def get_back_menu(lang: str = "ru"):
+    buttons_data = [
+        {"action": "set_menu"}
+    ]
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                text=get_text(f"buttons-{btn.get('action')}", lang=lang),
+                callback_data=dumps({"data": btn.get('action')})
+            )
+        ]
+        for btn in buttons_data
+    ]
     return InlineKeyboardMarkup(keyboard)
+
+if __name__ == "__main__":
+    print(get_menu_keyboard().to_dict())

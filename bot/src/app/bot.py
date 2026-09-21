@@ -17,6 +17,7 @@ from ..scripts.users import get_user_model
 
 from ..models.web import UserSchema
 
+from .localization import get_text
 from .inline_keyboard import get_menu_keyboard, get_back_menu
 
 class TelegramBotMessages():
@@ -93,19 +94,23 @@ class TelegramBot(TelegramBotWeb, TelegramBotMessages, TelegramBotTextHandler):
 
         try:
             callback_data = json.loads(query.data)
-            action = callback_data.get("a")
+            action = callback_data.get("data")
 
-            if action == "view_prof":
-                await self.profile_query(update, context)
+            match action:
+                case "sub_info":
+                    await self.sub_query(update, context)
 
-            elif action == "sub_info":
-                await self.sub_query(update, context)
+                case "set_filter":
+                    pass
 
-            elif action == "set_filter":
-                pass
+                case "view_prof":
+                    await self.profile_query(update, context)
 
-            elif action == "set_menu":
-                await self.menu_query(update, context)
+                case "set_menu":
+                    await self.menu_query(update, context)
+
+                case _:
+                    pass
 
         except Exception as exc:
             print(exc)
