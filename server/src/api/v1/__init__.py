@@ -10,11 +10,11 @@ from .websocket import router as ws_router
 from ..dependencies import verify_secret_key
 
 verify_router = APIRouter(dependencies=[Depends(verify_secret_key)])
-verify_router.include_router(filter_fouter)
-verify_router.include_router(internal_router)
-verify_router.include_router(payment_router)
 verify_router.include_router(user_router)
 verify_router.include_router(subscription_router)
+verify_router.include_router(filter_fouter)
+verify_router.include_router(payment_router)
+verify_router.include_router(internal_router)
 
 default_router = APIRouter()
 default_router.include_router(ws_router)
