@@ -1,6 +1,6 @@
 from .client import web_client
 
-from .models.users import UserSchema
+from ..models.user import UserRead
 from ..app.config import settings
 
 class SeafiAPI():
@@ -14,7 +14,7 @@ class SeafiAPI():
 
     # --- users ---
 
-    async def create_user(self, telegram_id: int, username: str) -> UserSchema | int:
+    async def create_user(self, telegram_id: int, username: str) -> UserRead | int:
         response = await web_client.fetch(
             url="/api/v1/users",
             method="POST",
@@ -22,16 +22,16 @@ class SeafiAPI():
             json={"username": username, "telegram_id": telegram_id}
         )
         if response.status_code == 201:
-            return UserSchema(**response.data)
+            return UserRead(**response.data)
         return response.status_code
     
-    async def get_user(self, telegram_id: int) -> UserSchema | int:
+    async def get_user(self, telegram_id: int) -> UserRead | int:
         response = await web_client.fetch(
             url=f"/api/v1/users/{telegram_id}",
             headers=self.auth_header
         )
         if response.status_code == 200:
-            return UserSchema(**response.data)
+            return UserRead(**response.data)
         return response.status_code
 
     async def patch_user(self, telegram_id: int, **kwargs) -> bool | int:

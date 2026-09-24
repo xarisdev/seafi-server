@@ -1,18 +1,26 @@
-MESSAGES = {
-    "reg_error": "Необходима авторизация. /start",
-    "web_error": "Произошла сетевая ошибка.\n\nПопробуйте еще раз позднее или обратитесь в поддержку: @xarisssupport\n\nDetail: --detail",
+import logging
 
-    "language": {
-        "message": "Выберите язык\n___\nSelect language",
-        "btn_lang_ru": "Русский RU",
-        "btn_lang_kg": "Кыргызча KG",
-        "btn_lang_en": "English EN",
-    },
+from typing import Optional, Literal
+from string import Template
+
+logger = logging.getLogger(__name__)
+
+ERRORS = {
+    "reg": "Необходима авторизация. /start",
+    "web": "Произошла сетевая ошибка.\n\nПопробуйте еще раз позднее или обратитесь в поддержку: @xarisssupport\n\nDetail: $detail",
+}
+LANGUAGES = {
+    "message": "Выберите язык\n___\nSelect language",
+    "btn_lang_ru": "Русский RU",
+    "btn_lang_kg": "Кыргызча KG",
+    "btn_lang_en": "English EN"
+}
+MESSAGES = {
     "ru": {
         "welcome": "Добро пожаловать!",
         "menu": "Меню:",
 
-        # Кнопки клавиатуры
+        # Keyboard buttons
         "buttons": {
             "sub_info": "Подписка",
             "set_filter": "Настроить фильтр",
@@ -20,56 +28,70 @@ MESSAGES = {
             "set_menu": "В меню"
         },
 
-        # Шаблоны для вставки
-        "formats": {
-            "profile": "Профиль\nID: --id\nUsername: --username\nСоздан: --created_at"
+        # VIEW Templates
+        "templates": {
+            "profile": "Профиль\nID: $id\nUsername: $username\nСоздан: $created_at"
         },
 
-        # Шаблон для объявлений
-        "ads": {
-            "": ""
-        }
+        # ADS Templates
+        "ads": {}
     }
 }
 
-def get_reg_error() -> str: return MESSAGES.get("reg_error")
-def get_web_error() -> str: return MESSAGES.get("web_error")
+class Localization:
+    def __init__(self):
+        self.data = MESSAGES
+        self.lang = LANGUAGES
+        self.errors = ERRORS
 
-def get_lang(key: str) -> str:
-    """
-    Text key format: `message/btn_lang_code`
+    def get(self, keys: str, lang_code: str = "ru") -> str:
+        path = keys.split(".")
 
-    Supported code's: `ru`, `-`, `-`
-    """
-    data: dict = MESSAGES.get("language")
-    text = data.get(key)
-    return text
+        data = self.data.get(lang_code)
+        if not data:
+            logger.warning(f"Not found language code: {lang_code}")
+            return "[Incorrect language code]"
 
-def get_text(key: str, lang: str = "ru") -> str:
-    """
-    Supported language: `ru`, `-`, `-`\n
-    Text key format: `"key1-key2-key3-..."`
+        for key in path:
+            if not key:
+                continue
 
-    ### Fixed keys (key1)
-    - Welcome msg - `'welcome'`
-    - Menu msg - `'menu'`
-    - Buttons dict key - `'buttons'`
-    - Formats dict key - `'formats'`
-    - Ads dict key - `'ads'`
-    """
-    keys = key.split("-")
+            try: data = data[key]
+            except (KeyError, TypeError): return self._missing_key(key)
 
-    message = MESSAGES.get(lang)
-    for key in keys:
-        if not key:
-            continue
+        if isinstance(data, str):
+            return data
 
-        try:
-            message = message.get(key)
-        except TypeError, AttributeError:
-            return f"[Missing key: {key}]"
+        logger.warning(f"Key sequence incomplete: {path}")
+        return f"[Key sequence incomplete: {path}]"
 
-    if isinstance(message, str):
-        return message
+    def get_lang_selector_msg(self):
+        data = self.lang.get("message")
+        return data if data is not None else self._missing_key("message")
+        
+    def get_lang_selector_btn(self, key: str):
+        data = self.lang.get(key)
+        return data if data is not None else self._missing_key(key)
 
-    return f"[Key sequence incomplete: {key}]"
+    def get_template(self, key: str, lang_code: str = "ru") -> Template:
+        """
+        :key: Name of template
+        """
+        data = self.get(f"templates.{key}", lang_code)
+        return Template(data)
+
+    def get_error_msg(self, error: Literal["reg", "web"], detail: Optional[str] = None) -> str:
+        data = self.errors.get(error)
+        if data is None:
+            data = self._missing_key(error)
+
+        if detail is None:
+            return data
+        
+        return Template(data).safe_substitute(detail=detail)
+
+    def _missing_key(self, key: str) -> str:
+        logger.warning(f"Missing key: {key}")
+        return f"[Missing key: {key}]"
+
+localization = Localization()

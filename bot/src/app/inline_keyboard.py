@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
 from json import dumps
-from .localization import get_text, get_lang
+from .localization import localization
 
 def get_language_keyboard():
     buttons_data = [
@@ -12,7 +12,7 @@ def get_language_keyboard():
     keyboard = [
         [
             InlineKeyboardButton(
-                text=get_lang(f"btn_{btn.get('action')}"),
+                text=localization.get_lang_selector_btn(f"btn_{btn.get('action')}"),
                 callback_data=dumps({"data": btn.get('action')})
             )
         ]
@@ -29,7 +29,7 @@ def get_menu_keyboard(lang: str = "ru"):
     keyboard = [
         [
             InlineKeyboardButton(
-                text=get_text(f"buttons-{btn.get('action')}", lang=lang),
+                text=localization.get(f"buttons.{btn.get('action')}", lang_code=lang),
                 callback_data=dumps({"data": btn.get('action')})
             )
         ]
@@ -44,13 +44,10 @@ def get_back_menu(lang: str = "ru"):
     keyboard = [
         [
             InlineKeyboardButton(
-                text=get_text(f"buttons-{btn.get('action')}", lang=lang),
+                text=localization.get(f"buttons.{btn.get('action')}", lang_code=lang),
                 callback_data=dumps({"data": btn.get('action')})
             )
         ]
         for btn in buttons_data
     ]
     return InlineKeyboardMarkup(keyboard)
-
-if __name__ == "__main__":
-    print(get_menu_keyboard().to_dict())
