@@ -16,7 +16,7 @@ class User(Base):
     username: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
-    language: Mapped[Optional[str]] = mapped_column(String(4), nullable=True)
+    language: Mapped[str] = mapped_column(String(4), default="ru")
 
     is_premium: Mapped[bool] = mapped_column(default=False)
     premium_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
@@ -24,7 +24,6 @@ class User(Base):
 class UserCreate(BaseModel):
     telegram_id: int
     username: Optional[str] = None
-    language: Optional[str] = None
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
