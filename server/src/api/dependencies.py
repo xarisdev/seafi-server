@@ -23,7 +23,7 @@ async def verify_admin_key(x_admin_key: Annotated[str, Header(alias="X-Admin-Key
     if not is_valid:
         raise ForbiddenException("Invalid API key")
 
-    return is_valid
+    return x_admin_key
 
 async def verify_lava_webhook_key(lava_webhook_key: Annotated[str, Header(alias="Authorization")]):
     if not lava_webhook_key:

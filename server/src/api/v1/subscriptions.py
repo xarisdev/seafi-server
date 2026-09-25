@@ -13,7 +13,7 @@ from ...models.subscription import SubscriptionCreate, SubscriptionUpdate, Subsc
 
 router = APIRouter(prefix="/subscriptions", tags=["Subscriptions"])
 
-@router.post("/", response_model=SubscriptionRead, status_code=201)
+@router.post("", response_model=SubscriptionRead, status_code=201)
 async def create_subscription(
     subscription: SubscriptionCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -28,7 +28,7 @@ async def create_subscription(
 
     return created_subscription
 
-@router.get("/", response_model=list[SubscriptionRead])
+@router.get("", response_model=list[SubscriptionRead])
 async def get_subscriptions(
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
