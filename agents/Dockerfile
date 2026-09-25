@@ -1,5 +1,0 @@
-# --- requirements ---
-
-# --- build ---
-
-# --- uvicorn run ---
