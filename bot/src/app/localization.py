@@ -19,6 +19,7 @@ MESSAGES = {
     "ru": {
         "welcome": "Добро пожаловать!",
         "menu": "Меню:",
+        "payment": "Ниже предоставлены ссылки для оплаты. Выберите удобный для себя способ.\n\nВажно: ссылки действительны в течение 15 минут",
 
         # Keyboard buttons
         "buttons": {
@@ -32,7 +33,7 @@ MESSAGES = {
         "templates": {
             "profile": "Профиль\nID: $id\nUsername: $username\nСоздан: $created_at",
             "subscription": "Подписка — $title\n\n$description",
-            "subscription_btn": "$title - $$amount"
+            "subscription_btn": "Купить: $title - $amount"
         },
 
         # ADS Templates

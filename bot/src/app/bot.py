@@ -23,6 +23,8 @@ from .inline_keyboard import (
 from ..web.seafi_api import seafi_api
 from ..models.user import UserRead, UserInternal
 
+from ..scripts.subscription import loads_params
+
 logger = logging.getLogger("telegram.bot")
 
 # ------------ Bot MessageSenderMixin  ------------
@@ -144,8 +146,13 @@ class TelegramBot(MessageSenderMixin):
 
             # ------------ Subscription control buttons ------------
 
-            elif action == "": # placeholder
-                pass
+            elif "buy_sub" in action:
+                await self.buy_sub_query(
+                    update,
+                    context,
+                    user,
+                    action
+                )
 
             # ------------ Unexpected query ------------
 
@@ -206,13 +213,14 @@ class TelegramBot(MessageSenderMixin):
         for subscription in subscriptions:
             sub_text_template = localization.get_template("subscription", lang_code=user.language)
             sub_text = sub_text_template.substitute(
+                title=subscription.title,
                 description=subscription.description
             )
 
             btn_text_template = localization.get_template("subscription_btn", lang_code=user.language)
             btn_text = btn_text_template.substitute(
                 title=subscription.title,
-                amount=subscription.amount
+                amount=str(subscription.amount)
             )
             sub_btn = generate_btn(
                 text=btn_text,
@@ -236,6 +244,23 @@ class TelegramBot(MessageSenderMixin):
                                 message_id=update.callback_query.message.message_id,
                                 text=localization.get("menu", lang_code=user.language),
                                 reply_markup=get_menu_keyboard(user.language))
+
+    async def buy_sub_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user: UserInternal, action: str):
+        sub_id = int(action.split("_")[-1])
+
+        payload = await seafi_api.generate_link(user.telegram_id, sub_id)
+        if payload is None:
+            return
+
+        payload_btn = generate_btn(text="Pay on Lava.top", action="pass", url=payload.paymentUrl)
+        check_payment_btn = generate_btn(text="Check", action="check_payment")
+        payload_keyboard = setup_keyboard([[payload_btn], [check_payment_btn]])
+
+        await self.edit_message(context,
+                                chat_id=user.telegram_id,
+                                message_id=update.effective_message.message_id,
+                                text=localization.get("payment", lang_code="ru"),
+                                reply_markup=payload_keyboard)
 
     # ------------ Command handlers ------------
     
@@ -279,9 +304,100 @@ class TelegramBot(MessageSenderMixin):
 
     # ------------ admin commands ------------
 
-    async def _placeholder(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        pass
+    async def set_admin_status(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        telegram_id = update.effective_user.id
 
+        if context.bot_data.get(telegram_id) == "unset":
+            context.user_data["is_admin"] = False
+            await self.send_message(context,
+                                    chat_id=telegram_id,
+                                    text="Ошибка доступа.")
+            return # Больше не админ
+
+        args = update.effective_message.text.split()
+        if len(args) < 2:
+            await self.send_message(context,
+                                    chat_id=telegram_id,
+                                    text=f"Неверные параметры. {args}")
+            return
+
+        admin_password = args[1]
+        owner_password = args[2] if len(args) > 2 else None
+
+        secret_key = settings.TELEGRAM_BOT_TOKEN.split(":")[0][-4:]
+        secret_txt = settings.TELEGRAM_BOT_TOKEN.split(":")[1][:4]
+        bot_secret = f"{secret_key}:{secret_txt}"
+
+        if admin_password == bot_secret:
+            context.user_data["is_admin"] = True
+            text = "Admin status: OK"
+            
+            if owner_password == settings.TELEGRAM_BOT_TOKEN[-12:]:
+                context.user_data["is_owner"] = True
+                text += "\nOwner status: OK"
+            
+            await self.send_message(context,
+                                    chat_id=telegram_id,
+                                    text=text)
+
+    async def unset_admin_status(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        telegram_id = update.effective_user.id
+        
+        if not context.user_data.get("is_owner", False):
+            await self.send_message(context,
+                                    chat_id=telegram_id,
+                                    text="Ошибка доступа.")
+            return
+
+        args = update.effective_message.text.split()
+        if len(args) < 2:
+            await self.send_message(context,
+                                    chat_id=telegram_id,
+                                    text=f"Неверные параметры. {args}")
+            return
+
+        try: admin_id = int(args[-1])
+        except:
+            await self.send_message(context,
+                                    chat_id=telegram_id,
+                                    text=f"Неверные параметры. {args[-1]}")
+            return
+
+        context.bot_data[admin_id] = "unset"
+        
+        await self.send_message(context,
+                                chat_id=telegram_id,
+                                text=f"Права администратора {admin_id} аннулированы")
+
+    async def create_sub_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        telegram_id = update.effective_user.id
+        is_admin = context.user_data.get("is_admin", False)
+        
+        if not is_admin:
+            await self.send_message(context,
+                                    chat_id=telegram_id,
+                                    text="Ошибка доступа.")
+            return
+
+        text = update.message.text
+        data = loads_params(text)
+
+        if data is None:
+            await self.send_message(context,
+                                    chat_id=telegram_id,
+                                    text=f"Неверные параметры. {text}")
+            return
+
+        subscription = await seafi_api.create_subscription(admin_id=str(telegram_id), data=data)
+        if subscription is None:
+            await self.send_message(context,
+                                    chat_id=telegram_id,
+                                    text="Ошибка доступа.")
+            return
+            
+        await self.send_message(context,
+                                chat_id=telegram_id,
+                                text=str(subscription.model_dump()))
 
 async def on_startup(application) -> None:
     await seafi_api.init_client()
@@ -299,6 +415,12 @@ persistence = PicklePersistence(settings.PERSISTENCE_PATH)
 # ------------ Handlers ------------
 
 start_command_handler = CommandHandler("start", bot.start_command)
+
+set_admin_handler = CommandHandler("admin", bot.set_admin_status)
+unset_admin_handler = CommandHandler("remove", bot.unset_admin_status)
+
+create_sub_command_handler = CommandHandler("create_sub", bot.create_sub_command)
+
 callback_handler = CallbackQueryHandler(bot.callback_handler)
 
 # ------------ App ------------
@@ -313,4 +435,10 @@ app = (
 )
 
 app.add_handler(start_command_handler)
+
+app.add_handler(set_admin_handler)
+app.add_handler(unset_admin_handler)
+
+app.add_handler(create_sub_command_handler)
+
 app.add_handler(callback_handler)

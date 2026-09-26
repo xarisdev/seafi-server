@@ -3,10 +3,11 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from json import dumps
 from .localization import localization
 
-def generate_btn(text: str, action: str) -> InlineKeyboardButton:
+def generate_btn(text: str, action: str, **kwargs) -> InlineKeyboardButton:
     button = InlineKeyboardButton(
         text=text,
-        callback_data=dumps({"data": action})
+        callback_data=dumps({"data": action}),
+        **kwargs
     )
     return button
 
