@@ -1,4 +1,4 @@
-from typing import Annotated, Optional
+from typing import Annotated
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...db.database import get_db
@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends, Query
 from ...core.exceptions.http_exceptions import NotFoundException
 
 from ..models import PaymentLinkSchema
+
+from ...models.subscription import SubscriptionRead
 
 from ...crud.crud_subscriptions import crud_subscriptions
 
@@ -23,18 +25,20 @@ async def create_link(
     telegram_id: Annotated[int, Query(alias="telegram_id")],
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
-    subscription = await crud_subscriptions.get(db=db, id=subscription_id)
-    if not subscription:
+    subscription = await crud_subscriptions.get(
+        db=db,
+        schema_to_select=SubscriptionRead,
+        return_as_model=True,
+        one_or_none=True,
+        id=subscription_id
+    )
+    if subscription is None:
         raise NotFoundException("Subscription not found")
 
-    payment_data = create_payment_link(telegram_id, subscription)
+    payment_data = await create_payment_link(telegram_id, subscription)
     schema = PaymentLinkSchema(**payment_data)
 
     return schema
-
-#
-#
-#
 
 # redirects временные шаблоны
 

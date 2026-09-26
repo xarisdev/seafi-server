@@ -9,7 +9,7 @@ ENV_PATH = CURRENT_FILE_DIR.parent.parent / ".env"
 class Application(BaseSettings):
     APP_NAME: str
     APP_TOKEN: str
-    ADMIN_ID: int
+    ADMIN_ID: str
 
     LOCALHOST: str
 
