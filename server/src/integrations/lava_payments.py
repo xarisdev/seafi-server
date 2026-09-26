@@ -106,7 +106,7 @@ async def create_payment_link(telegram_id: int, subscription: SubscriptionRead):
     }
     payload_headers = {
         "Accept": "application/json",
-        "X-Api_key": settings.LAVA_API_KEY,
+        "X-Api-key": settings.LAVA_API_KEY,
         "Content-Type": "application/json"
     }
     payment_timeout_s = 15 * 60
@@ -126,7 +126,7 @@ async def create_payment_link(telegram_id: int, subscription: SubscriptionRead):
                     status_code=500,
                     detail=error_msg
                 )
-            invoice = response.json()
+            invoice: dict = response.json()
             invoice["payment_timeout_s"] = payment_timeout_s
 
             return invoice
