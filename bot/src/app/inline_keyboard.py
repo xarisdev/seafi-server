@@ -3,6 +3,17 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from json import dumps
 from .localization import localization
 
+def generate_btn(text: str, action: str) -> InlineKeyboardButton:
+    button = InlineKeyboardButton(
+        text=text,
+        callback_data=dumps({"data": action})
+    )
+    return button
+
+def setup_keyboard(buttons: list[list[InlineKeyboardButton]]) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup(buttons)
+    return keyboard
+
 def get_language_keyboard():
     buttons_data = [
         {"action": "lang_ru"},
@@ -51,3 +62,13 @@ def get_back_menu(lang: str = "ru"):
         for btn in buttons_data
     ]
     return InlineKeyboardMarkup(keyboard)
+
+def get_subs_keyboard(
+    buttons_data: list[dict],
+    lang: str = "ru"
+):
+    keyboard = [
+        [
+            InlineKeyboardButton(text=localization.get(f""))
+        ]
+    ]

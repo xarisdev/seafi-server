@@ -1,6 +1,7 @@
 from .client import web_client
 
 from ..models.user import UserRead
+from ..models.subscription import SubscriptionRead
 from ..app.config import settings
 
 class SeafiAPI():
@@ -12,7 +13,7 @@ class SeafiAPI():
     async def close_client(self):
         await web_client.close_client()
 
-    # --- users ---
+    # ------------ users ------------
 
     async def create_user(self, telegram_id: int, username: str) -> UserRead | int:
         response = await web_client.fetch(
@@ -43,12 +44,21 @@ class SeafiAPI():
         )
         return response.status_code
 
-    # --- subscriptions ---
+    # ------------ subscriptions ------------
 
-    async def get_subscriptions(self, telegram_id: int):
+    async def get_subscriptions(self) -> list[SubscriptionRead] | None:
+        """
+        Return list of Subscriptions, at error - None
+        """
         response = await web_client.fetch(
-            url=f"/api/v1/payments/products?telegram_id={telegram_id}"
+            url=f"/api/v1/subscriptions",
+            headers=self.auth_header
         )
-        return response.status_code
+        
+        if response.status_code == 200:
+            subscriptions = [SubscriptionRead(**sub) for sub in response.data]
+            return subscriptions
+        
+        return None
 
 seafi_api = SeafiAPI()

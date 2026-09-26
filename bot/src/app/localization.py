@@ -30,7 +30,9 @@ MESSAGES = {
 
         # VIEW Templates
         "templates": {
-            "profile": "Профиль\nID: $id\nUsername: $username\nСоздан: $created_at"
+            "profile": "Профиль\nID: $id\nUsername: $username\nСоздан: $created_at",
+            "subscription": "Подписка — $title\n\n$description",
+            "subscription_btn": "$title - $$amount"
         },
 
         # ADS Templates

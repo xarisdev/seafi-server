@@ -12,7 +12,13 @@ from telegram.ext import (
 from .config import settings
 
 from .localization import localization
-from .inline_keyboard import get_menu_keyboard, get_language_keyboard, get_back_menu
+from .inline_keyboard import (
+    get_menu_keyboard,
+    get_language_keyboard,
+    get_back_menu,
+    generate_btn,
+    setup_keyboard
+)
 
 from ..web.seafi_api import seafi_api
 from ..models.user import UserRead, UserInternal
@@ -188,7 +194,41 @@ class TelegramBot(MessageSenderMixin):
         )
 
     async def sub_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user: UserInternal):
-        pass
+        subscriptions = await seafi_api.get_subscriptions()
+
+        if subscriptions is None:
+            await self.web_error(context, chat_id=user.telegram_id, detail="None")
+            return
+
+        texts = []
+        buttons = []
+
+        for subscription in subscriptions:
+            sub_text_template = localization.get_template("subscription", lang_code=user.language)
+            sub_text = sub_text_template.substitute(
+                description=subscription.description
+            )
+
+            btn_text_template = localization.get_template("subscription_btn", lang_code=user.language)
+            btn_text = btn_text_template.substitute(
+                title=subscription.title,
+                amount=subscription.amount
+            )
+            sub_btn = generate_btn(
+                text=btn_text,
+                action=f"buy_sub_{subscription.id}",
+            )
+
+            texts.append(sub_text)
+            buttons.append([sub_btn])
+
+        keyboard = setup_keyboard(buttons)
+
+        await self.edit_message(context,
+                                chat_id=user.telegram_id,
+                                message_id=update.callback_query.message.message_id,
+                                text="\n\n".join(texts),
+                                reply_markup=keyboard)
 
     async def menu_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user: UserInternal):
         await self.edit_message(context,
@@ -197,7 +237,7 @@ class TelegramBot(MessageSenderMixin):
                                 text=localization.get("menu", lang_code=user.language),
                                 reply_markup=get_menu_keyboard(user.language))
 
-    # --- Command handlers ---
+    # ------------ Command handlers ------------
     
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user = await self.get_user(update, context, reg=True)
@@ -237,6 +277,12 @@ class TelegramBot(MessageSenderMixin):
                                 text=text,
                                 reply_markup=reply_markup)
 
+    # ------------ admin commands ------------
+
+    async def _placeholder(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        pass
+
+
 async def on_startup(application) -> None:
     await seafi_api.init_client()
     logger.info("Application started")
@@ -245,16 +291,18 @@ async def on_shutdown(application) -> None:
     await seafi_api.close_client()
     logger.info("Application stopped")
 
-# bot
-bot = TelegramBot()
+# ------------ Bot & Persistence ------------
 
+bot = TelegramBot()
 persistence = PicklePersistence(settings.PERSISTENCE_PATH)
 
-# handlers
+# ------------ Handlers ------------
+
 start_command_handler = CommandHandler("start", bot.start_command)
 callback_handler = CallbackQueryHandler(bot.callback_handler)
 
-# app
+# ------------ App ------------
+
 app = (
     ApplicationBuilder()
     .token(settings.TELEGRAM_BOT_TOKEN)
