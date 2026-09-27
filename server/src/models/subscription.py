@@ -16,27 +16,32 @@ class Subscription(Base):
     title: Mapped[str] = mapped_column(String(50))
     description: Mapped[str] = mapped_column(String(300))
 
-    amount: Mapped[float] = mapped_column(Float)
-    duration_hours: Mapped[int] = mapped_column(Integer)
+    amount_usd: Mapped[float] = mapped_column(Float)
+
+    duration_h: Mapped[int] = mapped_column(Integer)
 
 class SubscriptionCreate(BaseModel):
     offer_id: str
     title: str
     description: str
-    amount: float
-    duration_hours: int
+
+    amount_usd: float
+
+    duration_h: int
 
 class SubscriptionUpdate(BaseModel):
     id: int
     title: Optional[str] = None
     description: Optional[str] = None
-    amount: Optional[float] = None
-    duration_hours: Optional[int] = None
+    
+    amount_usd: Optional[float] = None
+
+    duration_h: Optional[int] = None
 
 class SubscriptionRead(BaseModel):
     id: int
     offer_id: str
     title: str
     description: str
-    amount: float
-    duration_hours: int
+    amount_usd: float
+    duration_h: int
