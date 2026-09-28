@@ -1,8 +1,10 @@
 # Seafi Server
 
+> This project is currently under active development.
+
 **seafi** is a project for convenient housing search in Kyrgyzstan. It collects new rental and real estate listings and sends them to users.
 
-**seafi-server**is a backend part of the project. It provides an API for the project's own client — the Telegram bot [@seafi_arenda_bot](https://t.me/seafi_arenda_bot).
+**seafi-server** is a backend part of the project. It provides an API for the project's own client — the Telegram bot [@seafi_arenda_bot](https://t.me/seafi_arenda_bot).
 
 ## Architecture
 
@@ -15,6 +17,7 @@ Telegram Bot → API → WebAgent → Real Estate Websites
 * SQLAlchemy
 * SQLite
 * Pydantic
+* pytest-asyncio
 * Docker
 
 ## Running
