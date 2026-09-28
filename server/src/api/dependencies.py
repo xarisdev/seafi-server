@@ -7,7 +7,7 @@ from ..core.exceptions.http_exceptions import UnauthorizedException, ForbiddenEx
 
 from ..core.config import settings
 
-async def verify_secret_key(x_api_key: Annotated[str, Header(alias="X-Api-Key")]):
+async def verify_x_api_key(x_api_key: Annotated[str, Header(alias="X-Api-Key")]):
     if not x_api_key:
         raise UnauthorizedException("Missing API key")
 
@@ -15,7 +15,7 @@ async def verify_secret_key(x_api_key: Annotated[str, Header(alias="X-Api-Key")]
     if not is_valid:
         raise ForbiddenException("Invalid API key")
 
-async def verify_admin_key(x_admin_key: Annotated[str, Header(alias="X-Admin-Key")]):
+async def verify_x_admin_key(x_admin_key: Annotated[str, Header(alias="X-Admin-Key")]):
     if not x_admin_key:
         raise UnauthorizedException("Missing API key")
 

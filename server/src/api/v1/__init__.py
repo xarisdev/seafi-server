@@ -8,9 +8,9 @@ from .subscriptions import router as subscription_router
 from .users import router as user_router
 from .websocket import router as ws_router
 
-from ..dependencies import verify_secret_key
+from ..dependencies import verify_x_api_key
 
-verify_router = APIRouter(dependencies=[Depends(verify_secret_key)])
+verify_router = APIRouter(dependencies=[Depends(verify_x_api_key)])
 verify_router.include_router(user_router)
 verify_router.include_router(subscription_router)
 verify_router.include_router(filter_fouter)

@@ -1,17 +1,16 @@
 from typing import Annotated
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...db.database import get_db
 
 from fastapi import APIRouter, Depends, Query
-from ...core.exceptions.http_exceptions import NotFoundException
 
 from ..models import PaymentLinkSchema
 
+from ...core.exceptions.http_exceptions import NotFoundException
+
+from ...db.database import get_db
 from ...models.subscription import SubscriptionRead
-
 from ...crud.crud_subscriptions import crud_subscriptions
-
 from ...integrations.lava_payments import create_payment_link
 
 router = APIRouter(prefix="/payments", tags=["Payments"])

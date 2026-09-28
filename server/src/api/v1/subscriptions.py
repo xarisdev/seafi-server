@@ -3,7 +3,7 @@ from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi import APIRouter, Depends
-from ..dependencies import verify_admin_key
+from ..dependencies import verify_x_admin_key
 from ...core.exceptions.http_exceptions import NotFoundException
 
 from ...db.database import get_db
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/subscriptions", tags=["Subscriptions"])
 async def create_subscription(
     subscription: SubscriptionCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    admin_auth: Annotated[str, Depends(verify_admin_key)]
+    admin_auth: Annotated[str, Depends(verify_x_admin_key)]
 ):
     created_subscription = await crud_subscriptions.create(
         db=db,
@@ -44,7 +44,7 @@ async def patch_subscription(
     subscription_id: int,
     subscription_data: SubscriptionUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    admin_auth: Annotated[str, Depends(verify_admin_key)]
+    admin_auth: Annotated[str, Depends(verify_x_admin_key)]
 ):
     db_sub = await crud_subscriptions.exists(db=db, id=subscription_id)
     if not db_sub:
