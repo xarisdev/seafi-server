@@ -1,13 +1,13 @@
 services:
   server:
     build:
-      context: ./server
+      context: .
       dockerfile: Dockerfile
     container_name: seafi_backend_container
     ports:
       - "8000:8000"
     env_file:
-      - ./server/.env
+      - .env
     restart: always
     volumes:
       - seafi_db:/src/data
