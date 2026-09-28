@@ -39,10 +39,20 @@ class PaymentService(BaseSettings):
         env_file_encoding="utf-8"
     )
 
+class TestSettings(BaseSettings):
+    TEST_TELEGRAM_ID: int
+    TEST_USERNAME: str
+
+    model_config = SettingsConfigDict(
+        env_file=ENV_PATH,
+        enable_decoding="utf-8"
+    )
+
 class Settings(
     Application,
     DataBase,
-    PaymentService
+    PaymentService,
+    TestSettings
 ): pass
 
 settings = Settings()
