@@ -1,163 +1,56 @@
-## API Docs (v1)
-- Базовый URL: `https://seafi.xaris.space/api`
-- Версия API: `/v1`
+# Seafi Server
 
-### Работа с пользователями
-<details>
-<summary><code>POST /users</code> - Регистрация</summary>
+**seafi** is a project for convenient housing search in Kyrgyzstan. It collects new rental and real estate listings and sends them to users.
 
-**Параметры запроса:**
-| Название | Тип | Описание |
-|----------|-----|----------|
+**seafi-server**is a backend part of the project. It provides an API for the project's own client — the Telegram bot [@seafi_arenda_bot](https://t.me/seafi_arenda_bot).
 
-**Параметры Headers:**
-```json
-{
-    "Authorization": "secret_key"
-}
+## Architecture
+
+Telegram Bot → API → WebAgent → Real Estate Websites
+
+## Stack
+
+* Python
+* FastAPI
+* SQLAlchemy
+* SQLite
+* Pydantic
+* Docker
+
+## Running
+
+### Local
+
+Create a virtual environment and install dependencies:
+
+```bash
+python -m venv .venv
+pip install -r requirements.txt
 ```
-**Параметры Body:**
-```json
-{
-    "username": "str",
-    "telegram_id": "int"
-}
-```
-**Ответ JSON:**
-```json
-{
-    "status": "success"
-}
-```
-</details>
+Start the server:
 
-<details>
-<summary><code>GET /users/{telegram_id}</code> - Информация о пользователе</summary>
-
-**Параметры запроса:**
-| Название | Тип | Описание |
-|----------|-----|----------|
-| `telegram_id` | `int` | ID пользователя в телеграме |
-
-**Параметры Headers:**
-```json
-{
-    "Authorization": "secret_key"
-}
+```bash
+uvicorn src.core.main:app --reload --port 8000
 ```
-**Ответ JSON:**
-```json
-{
-    "id": "user.id",
-    "telegram_id": "user.telegram_id",
-    "username": "user.username",
-    "created_at": "user.created_at.isoformat()",
-    "subscription_id": "user.subscription_id"
-}
-```
-</details>
 
-### Работа с фильтрами
-<details>
-<summary><code>POST /filters/new</code> - Создание фильтра</summary>
+### Docker
 
-Параметры запроса:
-| Название | Тип | Описание |
-|----------|-----|----------|
+```bash
+docker compose up -d --build
+```
 
-Параметры Headers:
-```json
-{
-    "Authorization": "secret_key"
-}
-```
-Параметры Body:
-```json
-{
-    "telegram_id": "int",
-    "price_min": "int",
-    "price_max": "int",
-    "owner": "str"
-}
-```
-Ответ JSON:
-```json
-{
-    "status": "success"
-}
-```
-</details>
+## API Documentation
 
-### Lava.top
-<details>
-<summary><code>GET /payments/products?telegram_id=int</code> - Получение списка продуктов (администратор)</summary>
+Full interactive API documentation is available through Swagger UI:
 
-Параметры запроса:
-| Название | Тип | Описание |
-|----------|-----|----------|
-| `telegram_id` | `int` | Идентификатор администратора |
+**[Open Swagger UI](https://seafi.xaris.space/docs)**
 
-Параметры Headers:
-```json
-{
-    "Authorization": "secret_key"
-}
-```
-Параметры Body:
-```json
-{
+## Testing
 
-}
-```
-Ответ JSON:
-```json
-{
-    "status": "success",
-    "products": [
-        {
-            "id": "id",
-            "title": "Title of the product",
-            "offer_id": "offerId",
-            "offer_name": "Name of the offer"
-        }
-    ]
-}
-```
-</details>
+Run tests locally:
 
-<details>
-<summary><code>POST /payments/create-link</code> - Создание ссылки на оплату</summary>
+```bash
+pytest
+```
 
-Параметры запроса:
-| Название | Тип | Описание |
-|----------|-----|----------|
-
-Параметры Headers:
-```json
-{
-    "Authorization": "secret_key"
-}
-```
-Параметры Body:
-```json
-{
-    "telegram_id": "int",
-    "comment": "str"
-}
-```
-Ответ JSON:
-```json
-{
-    "status": "success",
-    "invoice": {
-        "id": "str",
-        "status": "str",
-        "amountTotal": {
-            "currency": "str",
-            "amount": "int"
-        },
-        "paymentUrl": "str"
-    }
-}
-```
-</details>
+Tests are also executed automatically by GitHub Actions before deployment.
