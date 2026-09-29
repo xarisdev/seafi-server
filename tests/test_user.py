@@ -1,17 +1,16 @@
 import pytest
 from src.core.config import settings
 
-# ------------ Users ------------
-
 @pytest.mark.asyncio
 async def test_create_user(client):
     response = await client.post(
         "/api/v1/users",
-        json={
-            "telegram_id": settings.TEST_TELEGRAM_ID
-        }
+        json={"telegram_id": settings.TEST_TELEGRAM_ID}
     )
     assert response.status_code == 201
+
+    user = response.json()
+    assert user["trial_expires_at"] is not None
 
 @pytest.mark.asyncio
 async def test_create_user_without_fields(client):

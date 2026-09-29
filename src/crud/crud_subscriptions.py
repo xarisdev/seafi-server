@@ -1,6 +1,6 @@
 from fastcrud import FastCRUD
 
-from ..models.subscription import Subscription, SubscriptionCreate, SubscriptionUpdate, SubscriptionRead
+from ..models.user_subscriptions import UserSubscription, UserSubscriptionCreate, UserSubscriptionRead, UserSubscriptionUpdate
 
-CRUDSubscription = FastCRUD[Subscription, SubscriptionCreate, SubscriptionUpdate, SubscriptionRead, dict, SubscriptionUpdate]
-crud_subscriptions = CRUDSubscription(Subscription)
+CRUDSubscriptions = FastCRUD[UserSubscription, UserSubscriptionCreate, UserSubscriptionUpdate, UserSubscriptionRead, dict, UserSubscriptionUpdate]
+crud_subscriptions = CRUDSubscriptions(UserSubscription)

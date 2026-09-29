@@ -1,5 +1,13 @@
 from pydantic import BaseModel
 
+class InvoiceSchema(BaseModel):
+    id: str
+    status: str
+    amountTotal: dict
+    paymentUrl: str
+    # Custom
+    payment_timeout_s: int
+
 class ProductSchema(BaseModel):
     id: str
     title: str

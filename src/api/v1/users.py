@@ -4,13 +4,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi import APIRouter, HTTPException, status, Depends
 
+from ..dependencies import get_user_by_path
+
 from ...db.database import get_db
 from ...crud.crud_users import crud_users
-from ...models.user import UserCreate, UserRead, UserUpdate
+from ...models.user import User, UserCreate, UserRead
 
-router = APIRouter(tags=["Users"])
+router = APIRouter(prefix="/users", tags=["Users"])
 
-@router.post("/users", response_model=UserRead, status_code=201)
+@router.post("", response_model=UserRead, status_code=201)
 async def create_user(
     user: UserCreate,
     db: Annotated[AsyncSession, Depends(get_db)]
@@ -22,30 +24,6 @@ async def create_user(
     created_user = await crud_users.create(db=db, object=user, return_as_model=True, schema_to_select=UserRead)
     return created_user
 
-@router.get("/users/{telegram_id}", response_model=UserRead)
-async def get_user(
-    telegram_id: int,
-    db: Annotated[AsyncSession, Depends(get_db)]
-):
-    user = await crud_users.get(
-        db=db,
-        schema_to_select=UserRead,
-        one_or_none=True,
-        telegram_id=telegram_id
-    )
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
+@router.get("/{telegram_id}", response_model=UserRead)
+async def get_user(user: Annotated[User, Depends(get_user_by_path)]):
     return user
-
-@router.patch("/users/{telegram_id}", status_code=202)
-async def patch_user(
-    telegram_id: int,
-    data: UserUpdate,
-    db: Annotated[AsyncSession, Depends(get_db)]
-):
-    await crud_users.update(
-        db=db,
-        object=data,
-        telegram_id=telegram_id
-    )

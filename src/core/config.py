@@ -12,6 +12,7 @@ class Application(BaseSettings):
     ADMIN_ID: str
 
     LOCALHOST: str
+    REDIRECT_URL: str
 
     model_config = SettingsConfigDict(
         env_file=ENV_PATH,
@@ -31,8 +32,7 @@ class PaymentService(BaseSettings):
     LAVA_API_KEY: str
     LAVA_API_PASSWORD: str
 
-    REDIRECT_URL: str
-    REDIRECT_URI: str
+    LAVA_REDIRECT_URI: str
 
     model_config = SettingsConfigDict(
         env_file=ENV_PATH,
