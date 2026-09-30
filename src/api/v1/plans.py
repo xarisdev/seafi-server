@@ -69,6 +69,8 @@ async def patch_plan(
     updated_subscription_plan = await crud_plans.update(
         db=db,
         object=subscription_plan_data,
+        schema_to_select=SubscriptionPlanUpdate,
+        return_as_model=True,
         id=subscription_plan_id
     )
     return updated_subscription_plan
