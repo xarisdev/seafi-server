@@ -15,10 +15,10 @@ verify_router.include_router(user_router)
 verify_router.include_router(plan_router)
 verify_router.include_router(filter_fouter)
 verify_router.include_router(payment_router)
+verify_router.include_router(product_router)
 verify_router.include_router(internal_router)
 
 default_router = APIRouter()
-default_router.include_router(product_router)
 default_router.include_router(ws_router)
 
 router = APIRouter(prefix='/v1')
