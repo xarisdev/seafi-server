@@ -1,14 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
 from ...models.lava import ProductSchema
 from ...integrations.lava.products import get_lava_products
 
-router = APIRouter(
-    prefix="/products",
-    tags=["Products"]
-)
-
-# placeholders
+router = APIRouter(prefix="/products", tags=["Products"])
 
 @router.get("")
 async def get_products() -> list[ProductSchema]:
@@ -16,12 +11,3 @@ async def get_products() -> list[ProductSchema]:
     if products: return products
     
     return {"status": "error", "msg": "No data received"}
-
-@router.post("")
-async def update_products():
-    products = await get_lava_products()
-    if not products:
-        return {
-            "status": "error",
-            "msg": "No data received"
-        }
