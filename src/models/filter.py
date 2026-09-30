@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, String, DateTime, Integer
+from sqlalchemy import BigInteger, String, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..db.model import Base
@@ -6,36 +6,47 @@ from ..db.model import Base
 from pydantic import BaseModel, ConfigDict
 
 from typing import Optional
-from datetime import datetime, timezone
 
 class Filter(Base):
     __tablename__ = "filters"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, unique=True)
 
-    city: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    price_min: Mapped[int] = mapped_column(Integer, default=-1)
-    price_max: Mapped[int] = mapped_column(Integer, default=0)
+    city: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    
+    property_type: Mapped[str] = mapped_column(String(255), default="apartment")
+    deal_type: Mapped[str] = mapped_column(String(255), default="rent")
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    owner_type: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+
+    price_min: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    price_max: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
 class FilterCreate(BaseModel):
-    telegram_id: int
+    user_id: int
 
 class FilterUpdate(BaseModel):
-    telegram_id: int
+    city: str
+    property_type: Optional[str] = None
+    deal_type: Optional[str] = None
 
-    city: Optional[str]
-    price_min: int 
-    price_max: int
+    owner_type: Optional[str] = None
+
+    price_min: Optional[int] = None
+    price_max: Optional[int] = None
 
 class FilterRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    telegram_id: int
+    user_id: int
 
-    city: str
-    price_min: int 
-    price_max: int
+    city: str | None
+    property_type: str
+    deal_type: str
+
+    owner_type: str | None = None
+
+    price_min: int | None = None
+    price_max: int | None = None

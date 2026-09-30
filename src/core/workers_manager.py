@@ -4,7 +4,6 @@ import logging
 import httpx
 
 from .config import settings
-from ..services.filters_queue import filters_queue
 
 class WorkersManager:
     def __init__(self, num_workers = 3):
@@ -18,9 +17,9 @@ class WorkersManager:
 
         self._is_running = True
 
-        for worker_id in range(1, self.num_workers + 1):
-            task = asyncio.create_task(self._worker_loop(worker_id))
-            self.workers_tasks.append(task)
+        #for worker_id in range(1, self.num_workers + 1):
+            #task = asyncio.create_task(self._worker_loop(worker_id))
+            #self.workers_tasks.append(task)
 
     async def stop(self):
         if not self._is_running:
@@ -28,12 +27,14 @@ class WorkersManager:
 
         self._is_running = False
 
-        for task in self.workers_tasks:
-            task.cancel()
+        #for task in self.workers_tasks:
+        #    task.cancel()
 
-        await asyncio.gather(*self.workers_tasks, return_exceptions=True)
-        self.workers_tasks.clear()
+        #await asyncio.gather(*self.workers_tasks, return_exceptions=True)
+        #self.workers_tasks.clear()
 
+# Placeholder
+"""
     async def _worker_loop(self, worker_id: int):
         headers = {"X-Api-Key": settings.APP_TOKEN}
 
@@ -65,5 +66,6 @@ class WorkersManager:
                     await asyncio.sleep(2.0)
 
                 await asyncio.sleep(settings.WORKER_DELAY)
+"""
 
 workers_manager = WorkersManager()

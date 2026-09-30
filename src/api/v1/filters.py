@@ -2,71 +2,53 @@ from typing import Annotated
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, Depends
+from ...core.exceptions.http_exceptions import NotFoundException
 
 from ...db.database import get_db
-from ...crud.crud_users import crud_users
 from ...crud.crud_filters import crud_filters
-from ...models.user import UserRead
-from ...models.filter import FilterCreate, FilterRead, FilterUpdate
-
-from ...services.filters_queue import filters_queue
+from ...models.filter import FilterRead, FilterUpdate
 
 router = APIRouter(prefix="/filters", tags=["Filters"])
 
-@router.post("/create", response_model=FilterRead, status_code=201)
-async def new_filter(
-    filter_create: FilterCreate,
+@router.get("/{user_id}", response_model=FilterRead)
+async def get_filter(
+    user_id: int,
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
-    telegram_id_row = await crud_filters.exists(db=db, telegram_id=filter_create.telegram_id)
-    if telegram_id_row:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Filter already exists"
-        )
+    db_filter = await crud_filters.get(
+        db=db,
+        user_id=user_id,
+        schema_to_select=FilterRead,
+        return_as_model=True,
+        one_or_none=True
+    )
+    if db_filter is None:
+        raise NotFoundException("Filter not found")
 
-    created_filter = await crud_filters.create(db=db, object=filter_create, return_as_model=True, schema_to_select=FilterRead)
-    return created_filter
+    return db_filter
 
-@router.patch("/patch", response_model=FilterRead, status_code=202)
+@router.patch("/{user_id}", response_model=FilterRead)
 async def patch_filter(
+    user_id: int,
     filter_update: FilterUpdate,
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
-    db_filter = await crud_filters.exists(db=db, telegram_id=filter_update.telegram_id)
-    if not db_filter:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Filter not found"
-        )
-
-    user: UserRead = await crud_users.get(
+    db_filter = await crud_filters.get(
         db=db,
-        schema_to_select=UserRead,
-        one_or_none=True,
-        telegram_id=filter_update.telegram_id
+        user_id=user_id,
+        schema_to_select=FilterRead,
+        return_as_model=True,
+        one_or_none=True
     )
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-
-    if not user.is_premium: # TODO:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Permission denied"
-        )
-
-    updated_filter: FilterRead = await crud_filters.update(
+    if db_filter is None:
+        raise NotFoundException("Filter not found")
+    
+    patched_filter = await crud_filters.update(
         db=db,
         object=filter_update,
-        telegram_id=filter_update.telegram_id
+        id=db_filter.id,
+        schema_to_select=FilterRead,
+        return_as_model=True
     )
-    if updated_filter.price_min != -1:
-        await filters_queue.add_filter(updated_filter.id)
-    else:
-        await filters_queue.remove_filter(updated_filter.id)
-
-    return updated_filter
+    return patched_filter
