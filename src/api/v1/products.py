@@ -1,7 +1,5 @@
 from fastapi import APIRouter, Depends
 
-from ..dependencies import verify_x_admin_key
-
 from ...models.lava import ProductSchema
 from ...integrations.lava.products import get_lava_products
 

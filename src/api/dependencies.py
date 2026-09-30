@@ -23,16 +23,6 @@ async def verify_x_api_key(x_api_key: Annotated[str, Header(alias="X-Api-Key")])
     if not is_valid:
         raise ForbiddenException("Invalid API key")
 
-async def verify_x_admin_key(x_admin_key: Annotated[str, Header(alias="X-Admin-Key")]):
-    if not x_admin_key:
-        raise UnauthorizedException("Missing API key")
-
-    is_valid = hmac.compare_digest(x_admin_key, settings.ADMIN_ID)
-    if not is_valid:
-        raise ForbiddenException("Invalid API key")
-
-    return x_admin_key
-
 async def verify_lava_webhook_key(lava_webhook_key: Annotated[str, Header(alias="Authorization")]):
     if not lava_webhook_key:
         raise UnauthorizedException("Missing API key")

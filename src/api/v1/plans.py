@@ -3,7 +3,6 @@ from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi import APIRouter, Depends
-from ..dependencies import verify_x_admin_key
 from ...core.exceptions.http_exceptions import NotFoundException
 
 from ...db.database import get_db
@@ -16,8 +15,7 @@ router = APIRouter(prefix="/plans", tags=["Subscription Plans"])
 @router.post("", response_model=SubscriptionPlanRead, status_code=201)
 async def create_plan(
     plan: SubscriptionPlanCreate,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    _admin_auth: Annotated[str, Depends(verify_x_admin_key)]
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     created_plan = await crud_plans.create(
         db=db,
@@ -62,8 +60,7 @@ async def get_plan(
 async def patch_plan(
     subscription_plan_id: int,
     subscription_plan_data: SubscriptionPlanUpdate,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    _admin_auth: Annotated[str, Depends(verify_x_admin_key)]
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     db_sub = await crud_plans.exists(db=db, id=subscription_plan_id)
     if not db_sub:
