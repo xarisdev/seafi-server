@@ -1,13 +1,12 @@
 import httpx
 import logging
 
-from typing import Any
-
 from ...core.exceptions.http_exceptions import HTTPException
 
 from ...core.config import settings
-from ...models.lava import InvoiceSchema
 from ...models.subscription_plans import SubscriptionPlanRead
+
+from .models import InvoiceSchema
 
 logger = logging.getLogger("integrations.lava.invoice")
 

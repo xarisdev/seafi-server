@@ -12,9 +12,9 @@ from ...db.database import get_db
 from ...crud.crud_plans import crud_plans
 from ...crud.crud_subscriptions import crud_subscriptions
 from ...models.user import User
-from ...models.lava import InvoiceSchema
 from ...models.subscription_plans import SubscriptionPlanRead
 from ...models.user_subscriptions import UserSubscriptionCreate
+from ...integrations.lava.models import InvoiceSchema
 from ...integrations.lava.invoice import create_invoice_link
 
 router = APIRouter(prefix="/payments", tags=["Payments"])

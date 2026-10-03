@@ -4,7 +4,8 @@ import logging
 from ...core.exceptions.http_exceptions import HTTPException
 
 from ...core.config import settings
-from ...models.lava import ProductSchema
+
+from .models import ProductSchema
 
 logger = logging.getLogger("integrations.lava.products")
 

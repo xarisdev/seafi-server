@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from ...models.lava import ProductSchema
+from ...integrations.lava.models import ProductSchema
 from ...integrations.lava.products import get_lava_products
 
 router = APIRouter(prefix="/products", tags=["Products"])
