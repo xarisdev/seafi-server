@@ -10,17 +10,17 @@ from datetime import datetime
 class Webhook(Base):
     __tablename__ = "webhooks"
 
-    event_id: Mapped[str] = mapped_column(primary_key=True)
+    contractId: Mapped[str] = mapped_column(primary_key=True)
     datetime: Mapped[datetime] = mapped_column(DateTime)
 
 class WebhookCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
-    event_id: str
+    contractId: str
     datetime: datetime
 
 class WebhookRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    event_id: str
+    contractId: str
     datetime: datetime

@@ -14,10 +14,10 @@ async def write_webhook(
     db: AsyncSession,
     data: dict
 ) -> Literal["exists", "created"]:
-    webhook = WebhookCreate(event_id=data["event_id"], datetime=data["timestamp"])
+    webhook = WebhookCreate(contractId=data["contractId"], datetime=data["timestamp"])
     
-    if await crud_webhooks.exists(db=db, event_id=webhook.event_id):
-        logger.info(f"Webhook already exists: {webhook.event_id}")
+    if await crud_webhooks.exists(db=db, contractId=webhook.contractId):
+        logger.info(f"Webhook already exists: {webhook.contractId}")
         return "exists"
     
     try:
@@ -25,7 +25,7 @@ async def write_webhook(
             db=db,
             object=webhook
         )
-        logger.info(f"Webhook {webhook.event_id} created.")
+        logger.info(f"Webhook {webhook.contractId} created.")
         return "created"
     
     except IntegrityError:
