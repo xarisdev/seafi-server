@@ -80,6 +80,15 @@ async def payment_handler(db: AsyncSession, webhook: dict, event_status: str):
     # ------------ Send result to bot ------------
 
     telegram_id = int(buyer_email.split("@")[0].removeprefix("user_"))
+
+    started_at = subscription.started_at
+    if started_at is not None:
+        started_at = started_at.isoformat()
+
+    expires_at = subscription.expires_at
+    if expires_at is not None:
+        expires_at = expires_at.isoformat()
+
     payload = {
         "invoice_id": subscription.invoice_id,
         "event_status": event_status,
@@ -88,8 +97,8 @@ async def payment_handler(db: AsyncSession, webhook: dict, event_status: str):
         "subscription_id": subscription.id,
         "subscription_range": {
             "created_at": subscription.created_at.isoformat(),
-            "started_at": subscription.started_at.isoformat(),
-            "expires_at": subscription.expires_at.isoformat()
+            "started_at": started_at,
+            "expires_at": expires_at
         }
     }
 
