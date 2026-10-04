@@ -16,6 +16,6 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/webhook", tags=["Webhook"], dependencies=[Depends(verify_lava_webhook_key)])
 
 @router.post("/lava", status_code=200)
-async def receive_webhook(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):    
+async def receive_webhook(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
     webhook = await request.json()
     await handle_webhook(db=db, webhook=webhook)
