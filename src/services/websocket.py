@@ -1,5 +1,9 @@
+import logging
+
 from asyncio import Lock
 from fastapi import WebSocket
+
+logger = logging.getLogger("websocket")
 
 class WebSocketManager:
     def __init__(self):
@@ -13,6 +17,7 @@ class WebSocketManager:
 
     async def disconnect(self):
         async with self._lock:
+            logger.info("WebSocket connection closed")
             self.connection = None
 
     async def send_json(self, telegram_id: int, payload: dict):
