@@ -7,8 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..core.exceptions.http_exceptions import BadRequestException
 from ..models.user_subscriptions import UserSubscriptionRead, UserSubscriptionUpdate
 from ..models.subscription_plans import SubscriptionPlanRead
+from ..models.user import UserRead, UserUpdate
 from ..crud.crud_subscriptions import crud_subscriptions
 from ..crud.crud_plans import crud_plans
+from ..crud.crud_users import crud_users
 
 logger = logging.getLogger("services.subscription")
 
@@ -48,10 +50,29 @@ async def activate_user_subscription(
     if plan is None:
         raise ValueError("Subscription plan not found")
 
+    user = await crud_users.get(
+        db=db,
+        id=subscription.user_id,
+        schema_to_select=UserRead,
+        return_as_model=True
+    )
     timestamp = datetime.now(timezone.utc)
+    expires_at = timestamp + timedelta(hours=plan.duration_hours)
+
+    if user.trial_expires_at is not None:
+        if user.trial_expires_at > timestamp:
+            trial = user.trial_expires_at - timestamp
+            expires_at += trial
+            
+            await crud_users.update(
+                db=db,
+                object=UserUpdate(trial_expires_at=None),
+                id=user.id
+            )
+
     model = UserSubscriptionUpdate(
         started_at=timestamp,
-        expires_at=timestamp + timedelta(hours=plan.duration_hours),
+        expires_at=expires_at,
         status=status
     )
 
