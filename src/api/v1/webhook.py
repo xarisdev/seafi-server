@@ -1,29 +1,21 @@
 import logging
 
+from typing import Annotated
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from fastapi import APIRouter, Request, Depends
 from ..dependencies import verify_lava_webhook_key
 
-from ...models.webhook import WebhookEventPayment, WebhookEventRefund
+from ...db.database import get_db
 
-from ...integrations.lava_payments import handle_webhook
+from ...integrations.lava.webhook_handler import handle_webhook
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["Webhook"], dependencies=[Depends(verify_lava_webhook_key)])
+router = APIRouter(prefix="/webhook", tags=["Webhook"], dependencies=[Depends(verify_lava_webhook_key)])
 
-@router.post("/webhook", status_code=200)
-async def receive_webhook(request: Request):
-    event_type = request.get("eventType")
-    event, _type = event_type.split(".")
-    webhook_schema = {
-        "payment": WebhookEventPayment,
-        "refund": WebhookEventRefund
-    }.get(event)
-
-    if not webhook_schema:
-        error_msg = f"Unexpected webhook eventType: {event_type}"
-        logger.error(error_msg)
-        return
-
-    webhook = webhook_schema(**request)
-    await handle_webhook(webhook)
+@router.post("/lava", status_code=200)
+async def receive_webhook(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):    
+    webhook = await request.json()
+    await handle_webhook(db=db, webhook=webhook)

@@ -19,7 +19,7 @@ from ...integrations.lava.invoice import create_invoice_link
 
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
-@router.post("/create-link/{plan_id}", status_code=201)
+@router.post("/create-link/{plan_id}", response_model=InvoiceSchema, status_code=201)
 async def create_link(
     plan_id: int,
     user: Annotated[User, Depends(get_user_by_query)],
@@ -40,10 +40,10 @@ async def create_link(
     await crud_subscriptions.create(
         db=db,
         object=UserSubscriptionCreate(
+            invoice_id=invoice_schema.id,
             user_id=user.id,
             plan_id=plan.id,
             status=invoice_schema.status,
-            invoice_id=invoice_schema.id
         )
     )
 
@@ -53,21 +53,21 @@ async def create_link(
 
 @router.get("/redirect/success")
 async def payment_success(
-    invoiceId: Annotated[int, Query(description="Offer invoice id")],
+    invoice_id: Annotated[int, Query(alias="invoiceId", description="Offer invoice id")],
     status: Annotated[str, Query(description="Payment status")]
 ) -> dict:
-    return {"status": status, "invoiceId": invoiceId}
+    return {"status": status, "invoice_id": invoice_id}
 
 @router.get("/redirect/failure")
 async def payment_failure(
-    invoiceId: Annotated[int, Query(description="Offer invoice id")],
+    invoice_id: Annotated[int, Query(alias="invoiceId", description="Offer invoice id")],
     status: Annotated[str, Query(description="Payment status")]
 ) -> dict:
-    return {"status": status, "invoiceId": invoiceId}
+    return {"status": status, "invoice_id": invoice_id}
 
 @router.get("/redirect/cancel")
 async def payment_cancel(
-    invoiceId: Annotated[int, Query(description="Offer invoice id")],
+    invoice_id: Annotated[int, Query(alias="invoiceId", description="Offer invoice id")],
     status: Annotated[str, Query(description="Payment status")]
 ) -> dict:
-    return {"status": status, "invoiceId": invoiceId}
+    return {"status": status, "invoice_id": invoice_id}

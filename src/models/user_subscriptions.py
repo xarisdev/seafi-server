@@ -12,6 +12,8 @@ class UserSubscription(Base):
     __tablename__ = "user_subscriptions"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    invoice_id: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
     plan_id: Mapped[int] = mapped_column(Integer, ForeignKey("subscription_plans.id"))
     
@@ -20,19 +22,21 @@ class UserSubscription(Base):
     expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     status: Mapped[str] = mapped_column(String(255))
-    invoice_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
 class UserSubscriptionCreate(BaseModel):
+    invoice_id: str
+
     user_id: int
     plan_id: int
 
     status: str
-    invoice_id: str
 
 class UserSubscriptionRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
     id: int
+    invoice_id: str
+    
     user_id: int
     plan_id: int
 
@@ -41,7 +45,6 @@ class UserSubscriptionRead(BaseModel):
     expires_at: datetime | None
 
     status: str
-    invoice_id: str
 
 class UserSubscriptionUpdate(BaseModel):
     started_at: datetime

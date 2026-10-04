@@ -1,37 +1,26 @@
-from pydantic import BaseModel
+from sqlalchemy import DateTime
+from sqlalchemy.orm import Mapped, mapped_column
 
-class WebhookEventPayment(BaseModel):
-    eventType: str
-    product: dict
-    #{
-    #    id: d31384b8-e412-4be5-a2ec-297ae6666c8f,
-    #    title: Тестовый продукт
-    #},
-    buyer: dict # {email: test@lava.top}
-    contractId: str
-    amount: float
-    currency: str
-    timestamp: str
-    status: str
-    errorMessage: str
+from ..db.model import Base
 
-class WebhookEventRefund(BaseModel):
+from pydantic import BaseModel, ConfigDict
+
+from datetime import datetime
+
+class Webhook(Base):
+    __tablename__ = "webhooks"
+
+    event_id: Mapped[str] = mapped_column(primary_key=True)
+    datetime: Mapped[datetime] = mapped_column(DateTime)
+
+class WebhookCreate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     event_id: str
-    event_type: str
-    created_at: str
-    data: dict | None
-    snake_case: dict | None
+    datetime: datetime
 
-class WebhookRequest(BaseModel):
-    eventType: str
+class WebhookRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
-    product: dict[str, str]
-    buyer: dict[str, str]
-
-    contractId: str
-    amount: float
-    currency: str
-
-    timestamp: str
-    status: str
-    errorMessage: str | None
+    event_id: str
+    datetime: datetime
