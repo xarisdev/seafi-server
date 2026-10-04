@@ -13,9 +13,10 @@ from ...crud.crud_plans import crud_plans
 from ...crud.crud_subscriptions import crud_subscriptions
 from ...models.user import User
 from ...models.subscription_plans import SubscriptionPlanRead
-from ...models.user_subscriptions import UserSubscriptionCreate
+from ...models.user_subscriptions import UserSubscriptionCreate, UserSubscriptionRead
 from ...integrations.lava.models import InvoiceSchema
 from ...integrations.lava.invoice import create_invoice_link
+from ...services.subscription import check_active_subscriptions
 
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
@@ -25,6 +26,13 @@ async def create_link(
     user: Annotated[User, Depends(get_user_by_query)],
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> InvoiceSchema:
+
+    # ------------ Check active ------------
+
+    await check_active_subscriptions(db=db, user_id=user.id)
+
+    # ------------ Plan info ------------
+    
     plan = await crud_plans.get(
         db=db,
         schema_to_select=SubscriptionPlanRead,
@@ -34,6 +42,8 @@ async def create_link(
     )
     if plan is None:
         raise NotFoundException("Subscription plan not found")
+
+    # ------------ Create invoice&sub ------------
 
     invoice_schema = await create_invoice_link(user.telegram_id, plan)
 
@@ -48,6 +58,26 @@ async def create_link(
     )
 
     return invoice_schema
+
+# ------------ Sub ------------
+
+@router.get("/subscription")
+async def get_active_subscription(
+    user: Annotated[User, Depends(get_user_by_query)],
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> UserSubscriptionRead:
+    subscription = await crud_subscriptions.get(
+        db=db,
+        user_id=user.id,
+        status="success",
+        schema_to_select=UserSubscriptionRead,
+        return_as_model=True,
+        one_or_none=True
+    )
+    if subscription is None:
+        raise NotFoundException("Active subscription not found")
+
+    return subscription
 
 # ------------ redirect placeholders ------------
 

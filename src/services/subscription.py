@@ -4,6 +4,7 @@ from datetime import datetime, timezone, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..core.exceptions.http_exceptions import BadRequestException
 from ..models.user_subscriptions import UserSubscriptionRead, UserSubscriptionUpdate
 from ..models.subscription_plans import SubscriptionPlanRead
 from ..crud.crud_subscriptions import crud_subscriptions
@@ -82,3 +83,28 @@ async def failed_user_subscription(
         schema_to_select=UserSubscriptionRead,
         return_as_model=True
     )
+
+async def check_active_subscriptions(
+    db: AsyncSession,
+    user_id: int
+):
+    now = datetime.now(timezone.utc)
+
+    subs = await crud_subscriptions.get_multi(
+        db=db,
+        user_id=user_id,
+        status="success",
+        schema_to_select=UserSubscriptionRead,
+        return_as_model=True
+    )
+    for sub in subs.get('data'):
+        if sub.expires_at > now:
+            raise BadRequestException("User already has an active subscription")
+        else:
+            sub.status = "expired"
+            sub_update = UserSubscriptionUpdate(**sub)
+            await crud_subscriptions.update(
+                db=db,
+                object=sub_update,
+                id=sub.id
+            )
