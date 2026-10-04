@@ -87,9 +87,9 @@ async def payment_handler(db: AsyncSession, webhook: dict, event_status: str):
         "datetime": webhook["timestamp"], # Webhook receive time
         "subscription_id": subscription.id,
         "subscription_range": {
-            "created_at": subscription.created_at,
-            "started_at": subscription.started_at,
-            "expires_at": subscription.expires_at
+            "created_at": subscription.created_at.isoformat(),
+            "started_at": subscription.started_at.isoformat(),
+            "expires_at": subscription.expires_at.isoformat()
         }
     }
 
