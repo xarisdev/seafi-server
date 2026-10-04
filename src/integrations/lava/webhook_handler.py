@@ -48,7 +48,7 @@ async def handle_webhook(db: AsyncSession, webhook: dict):
 
 async def payment_handler(db: AsyncSession, webhook: dict, event_status: str):
     buyer_email: str = webhook["buyer"]["email"] #
-    contract_id: str = webhook["contract_id"]
+    contract_id: str = webhook["contractId"]
 
     logger.info(f"Webhook contract_id: {contract_id}")
 

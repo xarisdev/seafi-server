@@ -23,7 +23,7 @@ async def verify_x_api_key(x_api_key: Annotated[str, Header(alias="X-Api-Key")])
     if not is_valid:
         raise ForbiddenException("Invalid API key")
 
-async def verify_lava_webhook_key(lava_webhook_key: Annotated[str, Query(alias="X-Api-Key")]):
+async def verify_lava_webhook_key(lava_webhook_key: Annotated[str, Header(alias="X-Api-Key")]):
     if not lava_webhook_key:
         raise UnauthorizedException("Missing API key")
 
