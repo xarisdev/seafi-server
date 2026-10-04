@@ -17,8 +17,5 @@ router = APIRouter(prefix="/webhook", tags=["Webhook"], dependencies=[Depends(ve
 
 @router.post("/lava", status_code=200)
 async def receive_webhook(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
-    try:
-        webhook = await request.json()
-    except Exception as exc:
-        print(exc)
+    webhook = await request.json()
     await handle_webhook(db=db, webhook=webhook)

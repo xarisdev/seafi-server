@@ -12,9 +12,8 @@ from ...services.websocket import websocket_manager
 logger = logging.getLogger("integrations.lava.webhook")
 
 async def handle_webhook(db: AsyncSession, webhook: dict):
-    event_id = webhook.get("event_id")
-
-    logger.info(f"Webhook [{event_id}]")
+    #event_id = webhook.get("event_id")
+    #logger.info(f"Webhook [{event_id}]")
 
     try:
         event_type: str = webhook.get("eventType")
@@ -43,7 +42,7 @@ async def handle_webhook(db: AsyncSession, webhook: dict):
     
     except Exception:
         logger.error(
-            f"Unexpected exception while handling Lava webhook [{event_id}]",
+            f"Unexpected exception while handling Lava webhook",
             exc_info=True
         )
 
