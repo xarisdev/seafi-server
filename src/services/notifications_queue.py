@@ -1,9 +1,8 @@
-import asyncio
-from .websocket import websocket_manager
+#import asyncio
+#from .websocket import websocket_manager
 
-from ..models.notification import Notification
-
-class NotificationQueue:
+#depricated
+"""class NotificationQueue:
     def __init__(self):
         self.queue = asyncio.Queue()
 
@@ -23,5 +22,5 @@ class NotificationQueue:
                 pass
             finally:
                 self.queue.task_done()
-
-notification_queue = NotificationQueue()
+"""
+notification_queue = None

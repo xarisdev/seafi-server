@@ -1,7 +1,5 @@
 import logging
 
-from typing import Literal
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
@@ -12,22 +10,25 @@ logger = logging.getLogger("services.webhook")
 
 async def write_webhook(
     db: AsyncSession,
-    data: dict
-) -> Literal["exists", "created"]:
-    webhook = WebhookCreate(contractId=data["contractId"], datetime=data["timestamp"])
+    contract_id: str,
+    datetime: str
+) -> bool:
+    webhook = WebhookCreate(
+        contractId=contract_id,
+        datetime=datetime
+    )
     
     if await crud_webhooks.exists(db=db, contractId=webhook.contractId):
         logger.info(f"Webhook already exists: {webhook.contractId}")
-        return "exists"
+        return False
     
     try:
-        await crud_webhooks.create(
-            db=db,
-            object=webhook
-        )
-        logger.info(f"Webhook {webhook.contractId} created.")
-        return "created"
+        await crud_webhooks.create(db=db, object=webhook)
     
     except IntegrityError:
         await db.rollback()
-        return "exists"
+        logger.info(f"Webhook already exists: {webhook.contractId}")
+        return False
+
+    logger.info(f"Webhook {webhook.contractId} created.")
+    return True

@@ -3,6 +3,8 @@ import logging
 from asyncio import Lock
 from fastapi import WebSocket
 
+from ..models.websocket import Payload
+
 logger = logging.getLogger("websocket")
 
 class WebSocketManager:
@@ -20,13 +22,14 @@ class WebSocketManager:
             logger.info("WebSocket connection closed")
             self.connection = None
 
-    async def send_json(self, telegram_id: int, payload: dict):
-        async with self._lock:
-            if self.connection:
-                data = {
-                    "telegram_id": telegram_id,
-                    "payload": payload
-                }
-                await self.connection.send_json(data)
+    async def send_json(self, payload: Payload):
+        try:
+            async with self._lock:
+                if self.connection:
+                    await self.connection.send_json(
+                        payload.model_dump()
+                    )
+        except Exception as exc:
+            logger.warning(f"Error while sending json: {exc}")
 
 websocket_manager = WebSocketManager()
