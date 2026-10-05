@@ -72,21 +72,21 @@ async def get_active_subscription(
 
 @router.get("/redirect/success")
 async def payment_success(
-    invoice_id: Annotated[int, Query(alias="invoiceId", description="Offer invoice id")],
+    invoice_id: Annotated[str, Query(alias="invoiceId", description="OfferId / invoiceId / ContractId")],
     status: Annotated[str, Query(description="Payment status")]
 ) -> dict:
     return {"status": status, "invoice_id": invoice_id}
 
 @router.get("/redirect/failure")
 async def payment_failure(
-    invoice_id: Annotated[int, Query(alias="invoiceId", description="Offer invoice id")],
+    invoice_id: Annotated[str, Query(alias="invoiceId", description="OfferId / invoiceId / ContractId")],
     status: Annotated[str, Query(description="Payment status")]
 ) -> dict:
     return {"status": status, "invoice_id": invoice_id}
 
 @router.get("/redirect/cancel")
 async def payment_cancel(
-    invoice_id: Annotated[int, Query(alias="invoiceId", description="Offer invoice id")],
+    invoice_id: Annotated[str, Query(alias="invoiceId", description="OfferId / invoiceId / ContractId")],
     status: Annotated[str, Query(description="Payment status")]
 ) -> dict:
     return {"status": status, "invoice_id": invoice_id}
