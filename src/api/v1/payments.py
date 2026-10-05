@@ -16,7 +16,7 @@ from ...models.subscription_plans import SubscriptionPlanRead
 from ...models.user_subscriptions import UserSubscriptionCreate, UserSubscriptionRead
 from ...integrations.lava.models import InvoiceSchema
 from ...integrations.lava.invoice import create_invoice_link
-from ...services.subscription import check_active_subscriptions
+from ...services.subscription import check_active_subscription, active_subscription
 
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
@@ -29,7 +29,7 @@ async def create_link(
 
     # ------------ Check active ------------
 
-    await check_active_subscriptions(db=db, user_id=user.id)
+    await check_active_subscription(db=db, user_id=user.id)
 
     # ------------ Plan info ------------
     
@@ -61,23 +61,12 @@ async def create_link(
 
 # ------------ Sub ------------
 
-@router.get("/subscription")
+@router.get("/subscription", response_model=UserSubscriptionRead)
 async def get_active_subscription(
     user: Annotated[User, Depends(get_user_by_query)],
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> UserSubscriptionRead:
-    subscription = await crud_subscriptions.get(
-        db=db,
-        user_id=user.id,
-        status="success",
-        schema_to_select=UserSubscriptionRead,
-        return_as_model=True,
-        one_or_none=True
-    )
-    if subscription is None:
-        raise NotFoundException("Active subscription not found")
-
-    return subscription
+    return await active_subscription(db=db, user_id=user.id)
 
 # ------------ redirect placeholders ------------
 

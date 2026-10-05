@@ -47,7 +47,7 @@ class UserSubscriptionRead(BaseModel):
     status: str
 
 class UserSubscriptionUpdate(BaseModel):
-    started_at: datetime | None
-    expires_at: datetime | None
+    started_at: datetime | None = None
+    expires_at: datetime | None = None
     
     status: str
