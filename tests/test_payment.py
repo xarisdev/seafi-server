@@ -39,7 +39,7 @@ async def test_create_link(client):
     )
     assert response.status_code == 201
 
-    invoice_schema = response.json()
+    invoice_schema = response.json()["invoice"]
     assert invoice_schema["status"] == "new"
 
 @pytest.mark.asyncio
@@ -52,9 +52,10 @@ async def test_not_found_subscription(client):
     assert response.json()["telegram_id"] == settings.TEST_TELEGRAM_ID
 
     response = await client.get(
-        f"/api/v1/payments/subscription?telegram_id={settings.TEST_TELEGRAM_ID}"
+        f"/api/v1/subscriptions/active?telegram_id={settings.TEST_TELEGRAM_ID}"
     )
-    assert response.status_code == 404
+    assert response.status_code == 200
+    assert response.json() == None
 
 @pytest.mark.asyncio
 async def test_get_success_subscription(client):
@@ -90,7 +91,7 @@ async def test_get_success_subscription(client):
         f"/api/v1/payments/create-link/{plan['id']}?telegram_id={settings.TEST_TELEGRAM_ID}"
     )
     assert response.status_code == 201
-    invoice_schema = response.json()
+    invoice_schema = response.json()["invoice"]
     assert invoice_schema["status"] == "new"
 
     response = await client.post(
@@ -108,7 +109,7 @@ async def test_get_success_subscription(client):
     assert response.status_code == 200
 
     response = await client.get(
-        f"/api/v1/payments/subscription?telegram_id={settings.TEST_TELEGRAM_ID}"
+        f"/api/v1/subscriptions/active?telegram_id={settings.TEST_TELEGRAM_ID}"
     )
     assert response.status_code == 200
     

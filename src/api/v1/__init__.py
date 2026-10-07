@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends
 from .filters import router as filter_fouter
 from .payments import router as payment_router
 from .products import router as product_router
+from .subscriptions import router as subs_router
 from .plans import router as plan_router
 from .users import router as user_router
 from .websocket import router as ws_router
@@ -16,6 +17,7 @@ verify_router.include_router(plan_router)
 verify_router.include_router(filter_fouter)
 verify_router.include_router(payment_router)
 verify_router.include_router(product_router)
+verify_router.include_router(subs_router)
 
 default_router = APIRouter()
 default_router.include_router(ws_router)

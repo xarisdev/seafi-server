@@ -4,13 +4,12 @@ from datetime import datetime, timezone, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..core.exceptions.http_exceptions import BadRequestException, NotFoundException
-from ..models.user_subscriptions import UserSubscriptionRead, UserSubscriptionUpdate
-from ..models.subscription_plans import SubscriptionPlanRead
 from ..models.user import UserRead, UserUpdate
-from ..crud.crud_subscriptions import crud_subscriptions
-from ..crud.crud_plans import crud_plans
+from ..models.subscription_plans import SubscriptionPlanRead
+from ..models.user_subscriptions import UserSubscriptionRead, UserSubscriptionUpdate
 from ..crud.crud_users import crud_users
+from ..crud.crud_plans import crud_plans
+from ..crud.crud_subscriptions import crud_subscriptions
 
 logger = logging.getLogger("services.subscription")
 
@@ -105,72 +104,50 @@ async def failed_user_subscription(
         return_as_model=True
     )
 
-async def check_active_subscription(
+async def get_actual_subscription(
     db: AsyncSession,
     user_id: int
-):
+) -> UserSubscriptionRead | None:
+    # ------------ Merge ------------
     now = datetime.now(timezone.utc)
-
-    subs = await crud_subscriptions.get_multi(
-        db=db,
-        user_id=user_id,
-        status="success",
-        schema_to_select=UserSubscriptionRead,
-        return_as_model=True
-    )
-    for sub in subs.get('data'):
-        if sub.expires_at > now:
-            raise BadRequestException("User already has an active subscription")
-        else:
-            sub.status = "expired"
-            sub_update = UserSubscriptionUpdate(**sub)
-            await crud_subscriptions.update(
-                db=db,
-                object=sub_update,
-                id=sub.id
-            )
-
-async def active_subscription(
-    db: AsyncSession,
-    user_id: int,
-) -> UserSubscriptionRead:
-    subs = await crud_subscriptions.get_multi(
-        db=db,
-        user_id=user_id,
-        status="success",
-        schema_to_select=UserSubscriptionRead,
-        return_as_model=True
-    )
-    now = datetime.now(timezone.utc)
-
-    actual_started_at: datetime = None
+    
+    last_active_id: int | None = None
+    min_started_at: datetime | None = None
     total_duration: timedelta = timedelta()
 
-    last_active_id = None
-
-    for sub in subs.get('data'):
-        if sub.expires_at.astimezone(timezone.utc) < now:
-            sub.status = "expired"
-            
+    result = await crud_subscriptions.get_multi(
+        db=db,
+        user_id=user_id,
+        status="success",
+        schema_to_select=UserSubscriptionRead,
+        return_as_model=True,
+        sort_columns=["id"]
+    )
+    subscriptions = result.get('data')
+    if not subscriptions:
+        return None
+    
+    for sub in subscriptions:
+        if sub.expires_at.astimezone(timezone.utc) < now:            
             await crud_subscriptions.update(
                 db=db,
                 id=sub.id,
                 object=UserSubscriptionUpdate(
-                    status=sub.status
+                    status="expired"
                 )
             )
-            
             continue
 
-        if actual_started_at is None:
-            actual_started_at = sub.started_at
-
-        if sub.started_at < actual_started_at:
-            actual_started_at = sub.started_at
-
-        total_duration += sub.expires_at.astimezone(timezone.utc) - sub.started_at.astimezone(timezone.utc)
+        if min_started_at is None:
+            min_started_at = sub.started_at
+        if sub.started_at < min_started_at:
+            min_started_at = sub.started_at
 
         last_active_id = sub.id
+        total_duration += (
+            sub.expires_at.astimezone(timezone.utc)
+            - sub.started_at.astimezone(timezone.utc)
+        )
 
         await crud_subscriptions.update(
             db=db,
@@ -180,18 +157,17 @@ async def active_subscription(
             )
         )
 
-    if last_active_id is not None:
-        subscription = await crud_subscriptions.update(
-            db=db,
-            id=last_active_id,
-            object=UserSubscriptionUpdate(
-                started_at=actual_started_at,
-                expires_at=actual_started_at + total_duration,
-                status="success"
-            ),
-            schema_to_select=UserSubscriptionRead,
-            return_as_model=True,
-        )
-        return subscription
-        
-    raise NotFoundException("User has not active subscription")
+    if last_active_id is None:
+        return None
+
+    return await crud_subscriptions.update(
+        db=db,
+        id=last_active_id,
+        object=UserSubscriptionUpdate(
+            started_at=min_started_at,
+            expires_at=min_started_at + total_duration,
+            status="success"
+        ),
+        schema_to_select=UserSubscriptionRead,
+        return_as_model=True,
+    )

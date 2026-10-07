@@ -29,6 +29,9 @@ class UserSubscriptionCreate(BaseModel):
     user_id: int
     plan_id: int
 
+    started_at: datetime | None = None
+    expires_at: datetime | None = None
+
     status: str
 
 class UserSubscriptionRead(BaseModel):
