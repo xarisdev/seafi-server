@@ -12,13 +12,15 @@ logger = logging.getLogger("integrations.lava.invoice")
 
 async def create_invoice_link(
     telegram_id: int,
-    plan: SubscriptionPlanRead
+    plan: SubscriptionPlanRead,
+    currency: str
 ) -> InvoiceSchema:
+    amount = plan.amount_usd if currency == "USD" else plan.amount_usd * 85
     payload = {
         "email": f"user_{telegram_id}@xaris.tech",
         "offerId": plan.offer_id,
-        "currency": "USD",
-        "amount": plan.amount_usd,
+        "currency": currency,
+        "amount": amount,
         "successful_return_url": f"{settings.LAVA_REDIRECT_URI}/success",
         "failure_return_url": f"{settings.LAVA_REDIRECT_URI}/failure",
         "cancel_return_url": f"{settings.LAVA_REDIRECT_URI}/cancel"

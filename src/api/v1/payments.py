@@ -26,7 +26,8 @@ router = APIRouter(prefix="/payments", tags=["Payments"])
 async def create_link(
     plan_id: int,
     user: Annotated[User, Depends(get_user_by_query)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: Annotated[AsyncSession, Depends(get_db)],
+    currency = Query(alias="currency", default="USD")
 ) -> CreateLinkResponse:
 
     started_at = None
@@ -52,7 +53,11 @@ async def create_link(
 
     # ------------ Create invoice&sub ------------
 
-    invoice_schema = await create_invoice_link(user.telegram_id, plan)
+    invoice_schema = await create_invoice_link(
+        telegram_id=user.telegram_id,
+        plan=plan,
+        currency=currency
+    )
 
     subscription = await crud_subscriptions.create(
         db=db,
