@@ -27,7 +27,7 @@ class WebSocketManager:
             async with self._lock:
                 if self.connection:
                     await self.connection.send_json(
-                        payload.model_dump()
+                        payload.model_dump(mode='json')
                     )
         except Exception as exc:
             logger.warning(f"Error while sending json: {exc}")
