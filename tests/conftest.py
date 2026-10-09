@@ -2,14 +2,19 @@ import pytest
 import pytest_asyncio
 
 from httpx import ASGITransport, AsyncClient
-
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 from src.api.dependencies import verify_x_api_key, verify_lava_webhook_key
 from src.db.database import get_db
 from src.db.model import Base
 from src.core.main import app
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+
+pytest_plugins = [
+    "tests.fixtures.user_fixture",
+    "tests.fixtures.plan_fixture",
+]
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def init_test_db():

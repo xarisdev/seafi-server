@@ -5,17 +5,8 @@ from datetime import datetime, timezone
 from src.core.config import settings
 
 @pytest.mark.asyncio
-async def test_create_link(client):
-    response = await client.post(
-        "/api/v1/users",
-        json={"telegram_id": settings.TEST_TELEGRAM_ID}
-    )
-    assert response.status_code == 201
-    assert response.json()["telegram_id"] == settings.TEST_TELEGRAM_ID
-
-    response = await client.get(
-        "/api/v1/products"
-    )
+async def test_create_link(client, user):
+    response = await client.get("/api/v1/products")
     assert response.status_code == 200
 
     first_product = response.json()[0]
@@ -43,32 +34,16 @@ async def test_create_link(client):
     assert invoice_schema["status"] == "new"
 
 @pytest.mark.asyncio
-async def test_not_found_subscription(client):
-    response = await client.post(
-        "/api/v1/users",
-        json={"telegram_id": settings.TEST_TELEGRAM_ID}
-    )
-    assert response.status_code == 201
-    assert response.json()["telegram_id"] == settings.TEST_TELEGRAM_ID
-
+async def test_not_found_subscription(client, user):
     response = await client.get(
-        f"/api/v1/subscriptions/active?telegram_id={settings.TEST_TELEGRAM_ID}"
+        f"/api/v1/subscriptions/active?telegram_id={user.telegram_id}"
     )
     assert response.status_code == 200
     assert response.json() == None
 
 @pytest.mark.asyncio
-async def test_get_success_subscription(client):
-    response = await client.post(
-        "/api/v1/users",
-        json={"telegram_id": settings.TEST_TELEGRAM_ID}
-    )
-    assert response.status_code == 201
-    assert response.json()["telegram_id"] == settings.TEST_TELEGRAM_ID
-
-    response = await client.get(
-        "/api/v1/products"
-    )
+async def test_get_success_subscription(client, user):
+    response = await client.get("/api/v1/products")
     assert response.status_code == 200
 
     first_product = response.json()[0]
