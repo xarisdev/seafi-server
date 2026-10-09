@@ -110,7 +110,7 @@ async def payment_handler(
             expires_at=subscription.expires_at
         )
     )
-    await websocket_manager.send_json(payload=payload)
+    await websocket_manager._put_payload(payload=payload)
 
 async def refund_or_chargeback_handler(
     db: AsyncSession,
