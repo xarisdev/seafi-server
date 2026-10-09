@@ -16,7 +16,7 @@ router = APIRouter(prefix="/plans", tags=["Subscription Plans"])
 async def create_plan(
     plan: SubscriptionPlanCreate,
     db: Annotated[AsyncSession, Depends(get_db)]
-):
+) -> SubscriptionPlanRead:
     created_plan = await crud_plans.create(
         db=db,
         object=plan,
@@ -31,12 +31,13 @@ async def create_plan(
 @router.get("", response_model=list[SubscriptionPlanRead])
 async def get_plans(
     db: Annotated[AsyncSession, Depends(get_db)]
-):
-    data = await crud_plans.get_multi(db=db, schema_to_select=SubscriptionPlanRead)
+) -> list[SubscriptionPlanRead]:
+    data = await crud_plans.get_multi(
+        db=db,
+        schema_to_select=SubscriptionPlanRead
+    )
+    
     plans = data.get("data", [])
-    if not plans:
-        raise NotFoundException("Subscription plans list is empty.")
-
     return plans
 
 @router.get("/{subscription_plan_id}", response_model=SubscriptionPlanRead)
@@ -61,7 +62,7 @@ async def patch_plan(
     subscription_plan_id: int,
     subscription_plan_data: SubscriptionPlanUpdate,
     db: Annotated[AsyncSession, Depends(get_db)]
-):
+) -> SubscriptionPlanRead:
     db_sub = await crud_plans.exists(db=db, id=subscription_plan_id)
     if not db_sub:
         raise NotFoundException(f"Subscription '{subscription_plan_id}' not found")
