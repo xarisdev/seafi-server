@@ -14,6 +14,7 @@ TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 pytest_plugins = [
     "tests.fixtures.user_fixture",
     "tests.fixtures.plan_fixture",
+    "tests.fixtures.subscription_fixture"
 ]
 
 @pytest_asyncio.fixture(scope="session", autouse=True)

@@ -89,3 +89,43 @@ async def test_get_success_subscription(client, user):
     assert response.status_code == 200
     
     assert response.json()["status"] == "success"
+
+@pytest.mark.asyncio
+async def test_check_real_invoice(client, user):
+    response = await client.get("/api/v1/products")
+    assert response.status_code == 200
+
+    first_product = response.json()[0]
+    assert "/ seafi" in first_product["title"]
+
+    response = await client.post(
+        "/api/v1/plans",
+        json={
+            "offer_id": first_product["offer_id"],
+            "title": "test-title",
+            "description": "test-d",
+            "amount_usd": 10.0,
+            "duration_hours": 24
+        }
+    )
+    assert response.status_code == 201
+    plan = response.json()
+
+    response = await client.post(
+        f"/api/v1/payments/create-link/{plan['id']}?telegram_id={settings.TEST_TELEGRAM_ID}"
+    )
+    assert response.status_code == 201
+    invoice_schema = response.json()["invoice"]
+    assert invoice_schema["status"] == "new"
+
+    response = await client.get(
+        f"/api/v1/payments/invoices/{invoice_schema["id"]}"
+    )
+    assert response.status_code == 200
+
+@pytest.mark.asyncio
+async def test_check_invoice_not_exists(client, fake_user_subscription):
+    response = await client.get(
+        f"/api/v1/payments/invoices/{fake_user_subscription.invoice_id}"
+    )
+    assert response.status_code == 404

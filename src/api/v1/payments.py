@@ -6,7 +6,11 @@ from fastapi import APIRouter, Depends, Query
 
 from ..dependencies import get_user_by_query
 
-from ...core.exceptions.http_exceptions import NotFoundException
+from ...core.exceptions.http_exceptions import (
+    BadRequestException,
+    NotFoundException,
+    HTTPException
+)
 
 from ...db.database import get_db
 from ...crud.crud_plans import crud_plans
@@ -14,9 +18,8 @@ from ...crud.crud_subscriptions import crud_subscriptions
 from ...models.user import User
 from ...models.subscription_plans import SubscriptionPlanRead
 from ...models.user_subscriptions import UserSubscriptionCreate, UserSubscriptionRead
-from ...integrations.lava.models import InvoiceSchema
-from ...integrations.lava.invoice import create_invoice_link
-from ...services.subscription import get_actual_subscription
+from ...integrations.lava.invoice import create_invoice_link, check_invoice_status
+from ...services.subscription import get_actual_subscription, compare_subscription
 
 from ..models import CreateLinkResponse
 
@@ -77,6 +80,47 @@ async def create_link(
         invoice=invoice_schema,
         subscription=subscription
     )
+
+# ------------ Payment status ------------
+
+@router.get("/invoices/{invoice_id}", response_model=UserSubscriptionRead)
+async def check_invoice(
+    invoice_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> UserSubscriptionRead:
+    subscription = await crud_subscriptions.get(
+        db=db,
+        invoice_id=invoice_id,
+        schema_to_select=UserSubscriptionRead,
+        return_as_model=True,
+        one_or_none=True
+    )
+    if subscription is None:
+        raise NotFoundException("Invoice not found")
+
+    if subscription.status in ("merge", "expired", "failed"):
+        return subscription
+
+    try:
+        invoice_status = await check_invoice_status(invoice_id=invoice_id)
+
+    except (BadRequestException, NotFoundException):
+        raise
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Payment provider error | {exc.args}"
+        )
+
+    if subscription.status != invoice_status.status:
+        subscription = await compare_subscription(
+            db=db,
+            subscription=subscription,
+            invoice_status=invoice_status
+        )
+
+    return subscription
 
 # ------------ redirect placeholders ------------
 

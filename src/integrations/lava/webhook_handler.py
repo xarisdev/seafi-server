@@ -12,6 +12,12 @@ from ...models.websocket import Payload, SubscriptionRange
 
 logger = logging.getLogger("integrations.lava.webhook")
 
+def normalize_status(status: str) -> str:
+    status = status.lower()
+    if status == "completed":
+        status = "success"
+    return status
+
 async def handle_webhook(db: AsyncSession, webhook: dict):
     try:
         event_type: str = webhook.get("eventType")
@@ -19,7 +25,7 @@ async def handle_webhook(db: AsyncSession, webhook: dict):
 
         contract_id: str = webhook["contractId"]
         buyer_email: str = webhook["buyer"]["email"]
-        status: str = webhook["status"]
+        status: str = normalize_status(webhook["status"])
         timestamp: str = webhook["timestamp"]
 
         logger.info(f"Webhook [{contract_id}]: {buyer_email} | {event_type} | {status}")

@@ -11,6 +11,8 @@ from ..crud.crud_users import crud_users
 from ..crud.crud_plans import crud_plans
 from ..crud.crud_subscriptions import crud_subscriptions
 
+from ..integrations.lava.models import InvoiceStatus
+
 logger = logging.getLogger("services.subscription")
 
 async def _get_subscription_exists(
@@ -90,15 +92,13 @@ async def failed_user_subscription(
 ) -> UserSubscriptionRead:
     _ = await _get_subscription_exists(db=db, invoice_id=invoice_id)
 
-    subscription_update = UserSubscriptionUpdate(
-        started_at=None,
-        expires_at=None,
-        status=status
-    )
-
     return await crud_subscriptions.update(
         db=db,
-        object=subscription_update,
+        object=UserSubscriptionUpdate(
+            started_at=None,
+            expires_at=None,
+            status=status
+        ),
         invoice_id=invoice_id,
         schema_to_select=UserSubscriptionRead,
         return_as_model=True
@@ -171,3 +171,30 @@ async def get_actual_subscription(
         schema_to_select=UserSubscriptionRead,
         return_as_model=True,
     )
+
+async def compare_subscription(
+    db: AsyncSession,
+    subscription: UserSubscriptionRead,
+    invoice_status: InvoiceStatus
+):
+    logger.info(
+        "Comparing invoice [%s] and subscription [%s]",
+        invoice_status.status,
+        subscription.status
+    )
+    if invoice_status.status == "success":
+        return await activate_user_subscription(
+            db=db,
+            invoice_id=invoice_status.id,
+            status=invoice_status.status
+        )
+    if invoice_status.status in ("failed", "cancelled"):
+        return await crud_subscriptions.update(
+            db=db,
+            id=subscription.id,
+            object=UserSubscriptionUpdate(
+                status="failed"
+            ),
+            schema_to_select=UserSubscriptionRead,
+            return_as_model=True
+        )

@@ -15,3 +15,15 @@ class ProductSchema(BaseModel):
     offer_id: str
     offer_name: str
     offer_description: str | None
+
+class InvoiceStatus(BaseModel):
+    id: str
+    type: str
+    status: str
+
+    receipt: dict
+    buyer: dict
+    product: dict
+
+    parentInvoice: dict | None = None
+    clientUtm: dict | None = None
