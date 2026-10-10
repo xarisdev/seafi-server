@@ -2,6 +2,7 @@ import httpx
 import logging
 
 from typing import Literal
+from decimal import Decimal, ROUND_HALF_UP
 from pydantic import ValidationError
 
 from ...core.exceptions.http_exceptions import (
@@ -18,6 +19,16 @@ from ...models.subscription_plans import SubscriptionPlanRead
 from .models import InvoiceSchema, InvoiceStatus
 
 logger = logging.getLogger("integrations.lava.invoice")
+
+def get_amount_by_currency(amount: Decimal, currency: str) -> Decimal:
+    if currency == "RUB":
+        exchange_rate = Decimal("85.00")
+    exchange_rate = Decimal("1.00")
+
+    amount = amount * exchange_rate
+    final_amount = amount.quantize(Decimal("1.00"), rounding=ROUND_HALF_UP)
+
+    return final_amount
 
 async def async_client(
     method: Literal["GET", "POST"],
@@ -86,13 +97,12 @@ async def create_invoice_link(
     plan: SubscriptionPlanRead,
     currency: Literal["USD", "RUB"]
 ) -> InvoiceSchema:
-    amount = plan.amount_usd if currency == "USD" else plan.amount_usd * 85
-    
+    amount = get_amount_by_currency(plan.amount_usd, currency=currency)
     payload = {
         "email": f"user_{telegram_id}@xaris.tech",
         "offerId": plan.offer_id,
         "currency": currency,
-        "amount": amount,
+        "amount": float(amount),
         "successful_return_url": f"{settings.LAVA_REDIRECT_URI}/success",
         "failure_return_url": f"{settings.LAVA_REDIRECT_URI}/failure",
         "cancel_return_url": f"{settings.LAVA_REDIRECT_URI}/cancel"
@@ -139,6 +149,8 @@ async def check_invoice_status(invoice_id: str) -> InvoiceStatus:
         invoice_status.status = invoice_status.status.lower()
         if invoice_status.status == "completed":
             invoice_status.status == "success"
+        if invoice_status.status == "in_progress":
+            invoice_status.status == "new"
             
         return invoice_status
     
