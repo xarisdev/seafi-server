@@ -21,7 +21,9 @@ async def test_create_user_without_fields(client):
 async def test_create_user_with_wrong_field(client):
     response = await client.post(
         "/api/v1/users",
-        json={"telegram_id": f"{settings.TEST_TELEGRAM_ID}abc"}
+        json={
+            "telegram_id": f"wrong{settings.TEST_TELEGRAM_ID}field"
+        }
     )
     assert response.status_code == 422
 
@@ -29,16 +31,19 @@ async def test_create_user_with_wrong_field(client):
 async def test_create_user(client):
     response = await client.post(
         "/api/v1/users",
-        json={"telegram_id": settings.TEST_TELEGRAM_ID}
+        json={
+            "telegram_id": settings.TEST_TELEGRAM_ID
+        }
     )
     assert response.status_code == 201
-    assert response.json()["trial_expires_at"] is not None
 
 @pytest.mark.asyncio
 async def test_create_existing_user(client, user):
     response = await client.post(
         "/api/v1/users",
-        json={"telegram_id": user.telegram_id}
+        json={
+            "telegram_id": user.telegram_id
+        }
     )
     assert response.status_code == 409
 

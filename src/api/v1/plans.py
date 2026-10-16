@@ -1,77 +1,81 @@
 from typing import Annotated
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
 from fastapi import APIRouter, Depends
-from ...core.exceptions.http_exceptions import NotFoundException
+from ...core.exceptions.http_exceptions import (
+    NotFoundException,
+    DuplicateValueException
+)
 
 from ...db.database import get_db
 from ...crud.crud_plans import crud_plans
-
-from ...models.subscription_plans import SubscriptionPlanCreate, SubscriptionPlanRead, SubscriptionPlanUpdate
+from ...models.plan import PlanCreate, PlanRead, PlanUpdate
 
 router = APIRouter(prefix="/plans", tags=["Subscription Plans"])
 
-@router.post("", response_model=SubscriptionPlanRead, status_code=201)
+@router.post("", response_model=PlanRead, status_code=201)
 async def create_plan(
-    plan: SubscriptionPlanCreate,
+    plan: PlanCreate,
     db: Annotated[AsyncSession, Depends(get_db)]
-) -> SubscriptionPlanRead:
-    created_plan = await crud_plans.create(
-        db=db,
-        object=plan,
-        return_as_model=True,
-        schema_to_select=SubscriptionPlanRead
-    )
+) -> PlanRead:
+    try:
+        created_plan = await crud_plans.create(
+            db=db,
+            object=plan,
+            return_as_model=True,
+            schema_to_select=PlanRead
+        )
+    except IntegrityError:
+        raise DuplicateValueException("Integrity Error")
 
     return created_plan
 
-# TODO
-
-@router.get("", response_model=list[SubscriptionPlanRead])
+@router.get("", response_model=list[PlanRead])
 async def get_plans(
     db: Annotated[AsyncSession, Depends(get_db)]
-) -> list[SubscriptionPlanRead]:
+) -> list[PlanRead]:
     data = await crud_plans.get_multi(
         db=db,
-        schema_to_select=SubscriptionPlanRead
+        schema_to_select=PlanRead
     )
     
     plans = data.get("data", [])
     return plans
 
-@router.get("/{subscription_plan_id}", response_model=SubscriptionPlanRead)
+@router.get("/{plan_id}", response_model=PlanRead)
 async def get_plan(
-    subscription_plan_id: int,
+    plan_id: int,
     db: Annotated[AsyncSession, Depends(get_db)]
-):
+) -> PlanRead:
     plan = await crud_plans.get(
         db=db,
-        schema_to_select=SubscriptionPlanRead,
+        id=plan_id,
+        schema_to_select=PlanRead,
         return_as_model=True,
-        one_or_none=True,
-        id=subscription_plan_id
+        one_or_none=True
     )
     if not plan:
-        raise NotFoundException("Subscription plan not found")
+        raise NotFoundException(f"Plan: {plan_id} not found")
     
     return plan
 
-@router.patch("/{subscription_plan_id}", response_model=SubscriptionPlanRead, status_code=202)
+@router.patch("/{plan_id}", response_model=PlanRead, status_code=202)
 async def patch_plan(
-    subscription_plan_id: int,
-    subscription_plan_data: SubscriptionPlanUpdate,
+    plan_id: int,
+    plan_data: PlanUpdate,
     db: Annotated[AsyncSession, Depends(get_db)]
-) -> SubscriptionPlanRead:
-    db_sub = await crud_plans.exists(db=db, id=subscription_plan_id)
-    if not db_sub:
-        raise NotFoundException(f"Subscription '{subscription_plan_id}' not found")
-    
-    updated_subscription_plan = await crud_plans.update(
+) -> PlanRead:
+    updated_plan = await crud_plans.update(
         db=db,
-        object=subscription_plan_data,
-        schema_to_select=SubscriptionPlanRead,
+        id=plan_id,
+        object=plan_data,
+        schema_to_select=PlanRead,
         return_as_model=True,
-        id=subscription_plan_id
+        one_or_none=True
     )
-    return updated_subscription_plan
+    if updated_plan is None:
+        raise NotFoundException(f"Plan: {plan_id} not found")
+    
+    return updated_plan

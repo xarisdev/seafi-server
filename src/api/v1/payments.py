@@ -3,124 +3,110 @@ from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi import APIRouter, Depends, Query
+from ...core.exceptions.http_exceptions import (
+    BadRequestException,
+    NotFoundException
+)
 
 from ..dependencies import get_user_by_query
 
-from ...core.exceptions.http_exceptions import (
-    BadRequestException,
-    NotFoundException,
-    HTTPException
-)
-
 from ...db.database import get_db
 from ...crud.crud_plans import crud_plans
-from ...crud.crud_subscriptions import crud_subscriptions
+from ...crud.crud_invoices import crud_invoices
 from ...models.user import User
-from ...models.subscription_plans import SubscriptionPlanRead
-from ...models.user_subscriptions import UserSubscriptionCreate, UserSubscriptionRead
-from ...integrations.lava.invoice import create_invoice_link, check_invoice_status
-from ...services.subscription import get_actual_subscription, compare_subscription
+from ...models.plan import PlanRead
+from ...models.invoice import InvoiceRead, EnumInvoiceCurrency
 
-from ..models import CreateLinkResponse
+from ...services.subscription import check_active_subscription
+from ...services.payment import check_pending_invoice
+
+from ...integrations.lava.invoice import create_lava_invoice, check_lava_invoice
+from ...integrations.lava.handlers.payment_handler import payment_handler
 
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
-@router.post("/create-link/{plan_id}", response_model=CreateLinkResponse, status_code=201)
-async def create_link(
-    plan_id: int,
-    user: Annotated[User, Depends(get_user_by_query)],
+@router.post("/invoices", response_model=InvoiceRead, status_code=201)
+async def create_invoice(
     db: Annotated[AsyncSession, Depends(get_db)],
-    currency = Query(alias="currency", default="USD")
-) -> CreateLinkResponse:
-
-    started_at = None
-    expires_at = None
-
-    # ------------ Check active ------------
-
-    result = await get_actual_subscription(db=db, user_id=user.id)
-    if result is not None:
-        started_at = result.expires_at
+    user: Annotated[User, Depends(get_user_by_query)],
+    plan_id: Annotated[int, Query(alias="plan_id")],
+    currency: Annotated[
+        EnumInvoiceCurrency,
+        Query(alias="currency")
+    ] = EnumInvoiceCurrency.USD
+) -> InvoiceRead:
 
     # ------------ Plan info ------------
 
     plan = await crud_plans.get(
         db=db,
-        schema_to_select=SubscriptionPlanRead,
-        return_as_model=True,
-        one_or_none=True,
-        id=plan_id
-    )
-    if plan is None:
-        raise NotFoundException("Subscription plan not found")
-
-    # ------------ Create invoice&sub ------------
-
-    invoice_schema = await create_invoice_link(
-        telegram_id=user.telegram_id,
-        plan=plan,
-        currency=currency
-    )
-
-    subscription = await crud_subscriptions.create(
-        db=db,
-        object=UserSubscriptionCreate(
-            invoice_id=invoice_schema.id,
-            user_id=user.id,
-            plan_id=plan.id,
-            started_at=started_at,
-            expires_at=expires_at,
-            status=invoice_schema.status,
-        ),
-        schema_to_select=UserSubscriptionRead,
-        return_as_model=True
-    )
-
-    return CreateLinkResponse(
-        invoice=invoice_schema,
-        subscription=subscription
-    )
-
-# ------------ Payment status ------------
-
-@router.get("/invoices/{invoice_id}", response_model=UserSubscriptionRead)
-async def check_invoice(
-    invoice_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)]
-) -> UserSubscriptionRead:
-    subscription = await crud_subscriptions.get(
-        db=db,
-        invoice_id=invoice_id,
-        schema_to_select=UserSubscriptionRead,
+        id=plan_id,
+        schema_to_select=PlanRead,
         return_as_model=True,
         one_or_none=True
     )
-    if subscription is None:
+    if plan is None:
+        raise NotFoundException("Subscription plan not found")
+    
+    # ------------ Check conflicts ------------
+
+    if await check_active_subscription(db=db, user_id=user.id):
+        raise BadRequestException("User already has an active subscription")
+
+    if await check_pending_invoice(db=db, user_id=user.id):
+        raise BadRequestException("User has an incomplete invoice")
+
+    # ------------ Create invoice ------------
+
+    invoice_schema = await create_lava_invoice(
+        user_id=user.id,
+        plan_id=plan.id,
+        offer_id=plan.offer_id,
+        amount=plan.amount,
+        currency=currency
+    )
+    created_invoice = await crud_invoices.create(
+        db=db,
+        object=invoice_schema,
+        schema_to_select=InvoiceRead,
+        return_as_model=True
+    )
+
+    return created_invoice
+
+@router.get("/invoices/{invoice_id}", response_model=InvoiceRead)
+async def check_invoice(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    invoice_id: int
+) -> InvoiceRead:
+    invoice = await crud_invoices.get(
+        db=db,
+        id=invoice_id,
+        schema_to_select=InvoiceRead,
+        return_as_model=True,
+        one_or_none=True
+    )
+    if invoice is None:
         raise NotFoundException("Invoice not found")
 
-    if subscription.status in ("merge", "expired", "failed"):
-        return subscription
-
-    try:
-        invoice_status = await check_invoice_status(invoice_id=invoice_id)
-
-    except (BadRequestException, NotFoundException):
-        raise
-
-    except Exception as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Payment provider error | {exc.args}"
-        )
-
-    if subscription.status != invoice_status.status:
-        subscription = await compare_subscription(
+    _status = await check_lava_invoice(invoice=invoice)
+    if _status is not None:
+        await payment_handler(
             db=db,
-            subscription=subscription,
-            invoice_status=invoice_status
+            event_status=_status[1],
+            contract_id=invoice.contract_id,
+            invoice_status=_status[0],
+            source='lava'
+        )
+        invoice = await crud_invoices.get(
+            db=db,
+            id=invoice_id,
+            schema_to_select=InvoiceRead,
+            return_as_model=True,
+            one_or_none=True
         )
 
-    return subscription
+    return invoice
 
 # ------------ redirect placeholders ------------
 

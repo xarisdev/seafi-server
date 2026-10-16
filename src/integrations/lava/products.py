@@ -1,22 +1,19 @@
 import httpx
 import logging
 
-from ...core.exceptions.http_exceptions import HTTPException
-
-from ...core.config import settings
-
 from .models import ProductSchema
+
+from ...core.exceptions.http_exceptions import HTTPException
+from ...core.config import settings
 
 logger = logging.getLogger("integrations.lava.products")
 
-async def get_lava_products() -> list[ProductSchema]:
-    headers = {"X-Api-Key": settings.LAVA_API_KEY}
-
+async def get_products() -> list[ProductSchema]:
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(
                 url=f"{settings.LAVA_API_URL}/v2/products?feedVisibility=ALL",
-                headers=headers,
+                headers={"X-Api-Key": settings.LAVA_API_KEY},
                 timeout=15.0
             )
             if response.status_code != 200:

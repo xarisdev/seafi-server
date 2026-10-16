@@ -3,6 +3,8 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
+from datetime import datetime, UTC
+
 from ..models.webhook import WebhookCreate
 from ..crud.crud_webhooks import crud_webhooks
 
@@ -11,11 +13,16 @@ logger = logging.getLogger("services.webhook")
 async def write_webhook(
     db: AsyncSession,
     contract_id: str,
-    datetime: str
+    buyer_email: str,
+    invoice_status: str,
+    timestamp: str
 ) -> bool:
+    timestamp = datetime.fromisoformat(timestamp).astimezone(UTC)
     webhook = WebhookCreate(
         contractId=contract_id,
-        datetime=datetime
+        buyer_email=buyer_email,
+        status=invoice_status,
+        timestamp=timestamp
     )
     
     if await crud_webhooks.exists(db=db, contractId=webhook.contractId):

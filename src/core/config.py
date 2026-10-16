@@ -19,8 +19,11 @@ class Application(BaseSettings):
         env_file_encoding="utf-8"
     )
 
-class DataBase(BaseSettings):
-    DATABASE_URL: str
+class PostgresDataBase(BaseSettings):
+    POSTGRES_DB: str
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_URL: str
 
     model_config = SettingsConfigDict(
         env_file=ENV_PATH,
@@ -50,7 +53,7 @@ class TestSettings(BaseSettings):
 
 class Settings(
     Application,
-    DataBase,
+    PostgresDataBase,
     PaymentService,
     TestSettings
 ): pass

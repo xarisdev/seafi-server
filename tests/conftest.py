@@ -9,7 +9,9 @@ from src.db.database import get_db
 from src.db.model import Base
 from src.core.main import app
 
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+TEST_DATABASE_URL = (
+    "postgresql+asyncpg://postgres:postgres@localhost:5432/seafi_test"
+)
 
 pytest_plugins = [
     "tests.fixtures.user_fixture",
@@ -17,14 +19,22 @@ pytest_plugins = [
     "tests.fixtures.subscription_fixture"
 ]
 
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.pool import NullPool
+
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def init_test_db():
-    engine = create_async_engine(TEST_DATABASE_URL, echo=False)
+    engine = create_async_engine(
+        TEST_DATABASE_URL,
+        echo=False,
+        poolclass=NullPool,
+    )
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     yield engine
-    
+
     await engine.dispose()
 
 @pytest_asyncio.fixture(scope="function")
@@ -47,7 +57,6 @@ async def db_session(init_test_db):
             
             yield session
             
-            app.dependency_overrides.clear()
             await transaction.rollback()
 
 @pytest_asyncio.fixture(scope="function")

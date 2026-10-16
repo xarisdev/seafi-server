@@ -10,8 +10,8 @@ async def test_create_plan(client):
             "offer_id": "TEST-OFFER-ID",
             "title": "TEST-TITLE",
             "description": "TEST-DESCRIPTION",
-            "amount_usd": 10.0,
-            "duration_hours": 24
+            "amount": 10.0,
+            "duration": 24
         }
     )
     assert response.status_code == 201

@@ -2,7 +2,8 @@ from typing import Annotated
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, Depends
+from ...core.exceptions.http_exceptions import HTTPException
 
 from ..dependencies import get_user_by_path
 
@@ -17,11 +18,16 @@ async def create_user(
     user: UserCreate,
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
-    telegram_id_row = await crud_users.exists(db=db, telegram_id=user.telegram_id)
-    if telegram_id_row:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Already exists")
+    if await crud_users.exists(db=db, telegram_id=user.telegram_id):
+        raise HTTPException(409, "Already exists")
 
-    created_user = await crud_users.create(db=db, object=user, return_as_model=True, schema_to_select=UserRead)
+    created_user = await crud_users.create(
+        db=db,
+        object=user,
+        return_as_model=True,
+        schema_to_select=UserRead
+    )
+    
     return created_user
 
 @router.get("/{telegram_id}", response_model=UserRead)

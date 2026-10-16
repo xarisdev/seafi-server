@@ -3,16 +3,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import settings
 
-from src.models.subscription_plans import SubscriptionPlan
+from src.models.plan import Plan
 
 @pytest_asyncio.fixture
-async def subscription_plan(db_session: AsyncSession) -> SubscriptionPlan:
-    subscription_plan = SubscriptionPlan(
+async def subscription_plan(db_session: AsyncSession) -> Plan:
+    subscription_plan = Plan(
         offer_id="TEST-OFFER-ID",
         title="TEST-TITLE",
         description="TEST-DESCRIPTION",
-        amount_usd=10.0,
-        duration_hours=24
+        amount=10.0,
+        duration=24
     )
 
     db_session.add(subscription_plan)

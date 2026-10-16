@@ -1,12 +1,10 @@
 import asyncio
 import logging
 
-import json
-
 from asyncio import Lock
 from fastapi import WebSocket
 
-from ..models.websocket import Payload
+from ..models.websocket import WebSocketMessage
 
 logger = logging.getLogger("websocket")
 
@@ -36,8 +34,8 @@ class WebSocketManager:
 
         logger.info("WebSocket connection closed")
 
-    async def _put_payload(self, payload: Payload):
-        _json = payload.model_dump(mode='json')
+    async def put_payload(self, message: WebSocketMessage):
+        _json = message.model_dump(mode='json')
         await self.queue.put(_json)
 
     async def _sender(self):

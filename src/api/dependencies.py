@@ -7,11 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Header, Depends, Query
 from ..core.exceptions.http_exceptions import NotFoundException, UnauthorizedException, ForbiddenException
 
-from ..core.config import settings
 from ..db.database import get_db
-
 from ..crud.crud_users import crud_users
 from ..models.user import UserRead
+
+from ..core.config import settings
 
 # ------------ Verify ------------
 

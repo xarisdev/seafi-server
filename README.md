@@ -15,7 +15,7 @@ Telegram Bot → API → WebAgent → Real Estate Websites
 * Python
 * FastAPI
 * SQLAlchemy
-* SQLite
+* PostgreSQL
 * Pydantic
 * pytest-asyncio
 * Docker
