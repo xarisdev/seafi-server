@@ -22,3 +22,13 @@ async def failed_invoice_payment(db: AsyncSession, contract_id: str, invoice_sta
         .where(Invoice.contract_id == contract_id)
         .values(status=invoice_status)
     )
+
+async def cancel_invoice(db: AsyncSession, invoice_id: int):
+    await db.execute(
+        update(Invoice)
+        .where(
+            Invoice.id == invoice_id,
+            Invoice.status == EnumInvoiceStatus.PENDING
+        )
+        .values(status=EnumInvoiceStatus.CANCELLED)
+    )
