@@ -15,7 +15,7 @@ from ...crud.crud_plans import crud_plans
 from ...crud.crud_invoices import crud_invoices
 from ...models.user import User
 from ...models.plan import PlanRead
-from ...models.invoice import InvoiceRead, EnumInvoiceCurrency
+from ...models.invoice import InvoiceRead, EnumInvoiceCurrency, EnumInvoiceStatus
 
 from ...services.subscription import check_active_subscription
 from ...services.payment import check_pending_invoice
@@ -73,6 +73,25 @@ async def create_invoice(
     )
 
     return created_invoice
+
+@router.get("/invoices", response_model=list[InvoiceRead])
+async def get_user_invoices(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_user_by_query)],
+    status: Annotated[EnumInvoiceStatus | None, Query(alias="status")] = None
+) -> list[InvoiceRead]:
+    
+    filters = {"user_id": user.id}
+    if status is not None:
+        filters["status"] = status
+
+    data = await crud_invoices.get_multi(
+        db=db,
+        **filters,
+        schema_to_select=InvoiceRead,
+        return_as_model=True
+    )
+    return data.get('data')
 
 @router.get("/invoices/{invoice_id}", response_model=InvoiceRead)
 async def check_invoice(

@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, UTC
+
 from sqlalchemy import select, exists, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,7 +10,8 @@ async def check_pending_invoice(db: AsyncSession, user_id: int) -> bool:
         select(
             exists().where(
                 Invoice.user_id == user_id,
-                Invoice.status == EnumInvoiceStatus.PENDING
+                Invoice.status == EnumInvoiceStatus.PENDING,
+                Invoice.created_at >= datetime.now(UTC) - timedelta(minutes=15)
             )
         )
     )
