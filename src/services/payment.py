@@ -46,7 +46,7 @@ async def get_user_invoices(db: AsyncSession, user_id: int, status: str | None) 
     result = await db.scalars(query)
     return list(result.all())
 
-async def cancel_invoice(db: AsyncSession, invoice_id: int):
+async def cancel_user_invoice(db: AsyncSession, invoice_id: int):
     query = (
         update(Invoice)
         .where(

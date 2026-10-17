@@ -18,7 +18,7 @@ from ...models.plan import PlanRead
 from ...models.invoice import InvoiceRead, EnumInvoiceCurrency, EnumInvoiceStatus
 
 from ...services.subscription import check_active_subscription
-from ...services.payment import check_pending_invoice, get_user_invoices, cancel_invoice
+from ...services.payment import check_pending_invoice, get_user_invoices, cancel_user_invoice
 
 from ...integrations.lava.invoice import create_lava_invoice, check_lava_invoice
 from ...integrations.lava.handlers.payment_handler import payment_handler
@@ -122,7 +122,7 @@ async def cancel_invoice(
     db: Annotated[AsyncSession, Depends(get_db)],
     invoice_id: int
 ):
-    await cancel_invoice(db=db, invoice_id=invoice_id)
+    await cancel_user_invoice(db=db, invoice_id=invoice_id)
     return
 
 # ------------ redirect placeholders ------------
