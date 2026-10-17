@@ -125,8 +125,9 @@ async def async_client(
 
 async def create_lava_invoice(
     user_id: int,
-    plan_id,
+    plan_id: int,
     offer_id: str,
+    telegram_id: int,
     amount: Decimal,
     currency: EnumInvoiceCurrency
 ) -> InvoiceCreate:
@@ -137,7 +138,7 @@ async def create_lava_invoice(
         url=f"{settings.LAVA_API_URL}/v3/invoice",
         headers=_lava_headers(),
         json={
-            "email": f"user_{user_id}@xaris.tech",
+            "email": f"user_{telegram_id}@xaris.tech",
             "offerId": offer_id,
             "currency": currency,
             "amount": float(amount),

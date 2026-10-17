@@ -62,6 +62,7 @@ async def create_invoice(
         user_id=user.id,
         plan_id=plan.id,
         offer_id=plan.offer_id,
+        telegram_id=user.telegram_id,
         amount=plan.amount,
         currency=currency
     )
