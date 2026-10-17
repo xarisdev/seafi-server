@@ -18,7 +18,7 @@ from ...models.plan import PlanRead
 from ...models.invoice import InvoiceRead, EnumInvoiceCurrency, EnumInvoiceStatus
 
 from ...services.subscription import check_active_subscription
-from ...services.payment import check_pending_invoice, cancel_invoice
+from ...services.payment import check_pending_invoice, get_user_invoices, cancel_invoice
 
 from ...integrations.lava.invoice import create_lava_invoice, check_lava_invoice
 from ...integrations.lava.handlers.payment_handler import payment_handler
@@ -75,23 +75,13 @@ async def create_invoice(
     return created_invoice
 
 @router.get("/invoices", response_model=list[InvoiceRead])
-async def get_user_invoices(
+async def get_user_invoices_by_status(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(get_user_by_query)],
     status: Annotated[EnumInvoiceStatus | None, Query(alias="status")] = None
 ) -> list[InvoiceRead]:
-    
-    filters = {"user_id": user.id}
-    if status is not None:
-        filters["status"] = status
-
-    data = await crud_invoices.get_multi(
-        db=db,
-        **filters,
-        schema_to_select=InvoiceRead,
-        return_as_model=True
-    )
-    return data.get('data')
+    result = await get_user_invoices(db=db, user_id=user.id, status=status)
+    return result
 
 @router.get("/invoices/{invoice_id}", response_model=InvoiceRead)
 async def check_invoice(
