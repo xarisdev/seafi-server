@@ -17,3 +17,7 @@ assets/
 data/
 
 mailmap.txt
+
+*.sql
+*.dump
+*.bak
