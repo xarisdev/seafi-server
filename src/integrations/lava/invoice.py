@@ -47,12 +47,15 @@ def _get_amount_by_currency(
 
     return final_amount
 
-def _normalize_invoice_status(status: str) -> EnumInvoiceStatus:
+def _normalize_invoice_status(status: str, error_message: str) -> EnumInvoiceStatus:
+    if error_message:
+        if "cancelled" in error_message.lower():
+            return EnumInvoiceStatus.CANCELLED
     return {
         "new": EnumInvoiceStatus.PENDING,
         "in_progress": EnumInvoiceStatus.PENDING,
         "failed": EnumInvoiceStatus.FAILED,
-        "cancelled": EnumInvoiceStatus.CANCELLED,
+        "cancelled": EnumInvoiceStatus.CANCELLED, # futuredepricated
         "success": EnumInvoiceStatus.COMPLETED,
         "completed": EnumInvoiceStatus.COMPLETED
     }[status.lower()]

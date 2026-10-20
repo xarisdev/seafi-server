@@ -20,7 +20,12 @@ async def handle_webhook(db: AsyncSession, webhook: dict):
 
         contract_id: str = webhook["contractId"]
         buyer_email: str = webhook["buyer"]["email"]
-        invoice_status = _normalize_invoice_status(webhook["status"])
+
+        invoice_status = _normalize_invoice_status(
+            status=webhook["status"],
+            error_message=webhook.get("errorMessage")
+        )
+        
         timestamp: str = webhook["timestamp"]
 
         logger.info(f"Webhook [{contract_id}]: {buyer_email} | {event_type} | {invoice_status}")
