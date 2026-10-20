@@ -21,7 +21,7 @@ class Subscription(Base):
         nullable=True
     )
     invoice_id: Mapped[Optional[int]] = mapped_column(
-        BigInteger, ForeignKey("invoices.id"),
+        Integer, ForeignKey("invoices.id"),
         nullable=True,
         unique=True
     )
