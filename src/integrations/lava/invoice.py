@@ -47,7 +47,7 @@ def _get_amount_by_currency(
 
     return final_amount
 
-def _normalize_invoice_status(status: str, error_message: str) -> EnumInvoiceStatus:
+def _normalize_invoice_status(status: str, error_message: str | None = None) -> EnumInvoiceStatus:
     if error_message:
         if "cancelled" in error_message.lower():
             return EnumInvoiceStatus.CANCELLED
@@ -176,7 +176,7 @@ async def check_lava_invoice(invoice: InvoiceRead) -> tuple[EnumInvoiceStatus, s
         url=f"{settings.LAVA_API_URL}/v1/invoices/{invoice.contract_id}",
         headers=_lava_headers()
     )
-    invoice_status = _normalize_invoice_status(response["status"])
+    invoice_status = _normalize_invoice_status(response["status"], response.get("errorMessage"))
     
     if invoice.status != invoice_status:
         if invoice_status == EnumInvoiceStatus.PENDING: # ignore
