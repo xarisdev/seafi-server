@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import Integer, String, DateTime, ForeignKey
+from sqlalchemy import Integer, BigInteger, String, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from pydantic import BaseModel, ConfigDict
@@ -21,7 +21,7 @@ class Subscription(Base):
         nullable=True
     )
     invoice_id: Mapped[Optional[int]] = mapped_column(
-        Integer, ForeignKey("invoices.id"),
+        BigInteger, ForeignKey("invoices.id"),
         nullable=True,
         unique=True
     )

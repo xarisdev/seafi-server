@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, DateTime
+from sqlalchemy import Integer, DateTime, BigInteger
 from sqlalchemy.orm import Mapped, mapped_column
 
 from pydantic import BaseModel, ConfigDict
@@ -10,7 +10,7 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    telegram_id: Mapped[int] = mapped_column(Integer, unique=True)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
