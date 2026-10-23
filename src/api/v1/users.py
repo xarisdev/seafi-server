@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends
 from ...core.exceptions.http_exceptions import HTTPException
 
-from ..dependencies import get_user_by_path
+from ..dependencies import get_user_by_path, get_user_by_id
 
 from ...db.database import get_db
 from ...crud.crud_users import crud_users
@@ -29,6 +29,10 @@ async def create_user(
     )
     
     return created_user
+
+@router.get("", response_model=UserRead)
+async def get_user_by_query_id(user: Annotated[User, Depends(get_user_by_id)]):
+    return user
 
 @router.get("/{telegram_id}", response_model=UserRead)
 async def get_user(user: Annotated[User, Depends(get_user_by_path)]):

@@ -35,15 +35,15 @@ async def verify_lava_webhook_key(lava_webhook_key: Annotated[str, Header(alias=
 
 # --------- User ------------
 
-async def _find_user(db: AsyncSession, telegram_id: int):
+async def _find_user(db: AsyncSession, **kwargs):
     user = await crud_users.get(
         db=db,
         schema_to_select=UserRead,
         return_as_model=True,
         one_or_none=True,
-        telegram_id=telegram_id
+        **kwargs
     )
-    if not user:
+    if user is None:
         raise NotFoundException
     
     return user
@@ -59,3 +59,9 @@ async def get_user_by_query(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> UserRead:
     return await _find_user(db=db, telegram_id=telegram_id)
+
+async def get_user_by_id(
+    user_id: Annotated[int, Query(alias="id")],
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> UserRead:
+    return await _find_user(db=db, id=user_id)

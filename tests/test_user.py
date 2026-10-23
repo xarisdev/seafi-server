@@ -53,3 +53,11 @@ async def test_user_exists(client, user):
         f"/api/v1/users/{user.telegram_id}"
     )
     assert response.status_code == 200
+
+@pytest.mark.asyncio
+async def test_get_user_by_id(client, user):
+    response = await client.get(
+        f"/api/v1/users?id={user.id}"
+    )
+    assert response.status_code == 200
+    assert response.json()["telegram_id"] == user.telegram_id
