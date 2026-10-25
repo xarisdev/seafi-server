@@ -1,6 +1,7 @@
 import logging
 
 from uuid import uuid4
+from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -77,6 +78,7 @@ async def handle_webhook(db: AsyncSession, webhook: dict):
             id=uuid4(),
             buyer_email=buyer_email,
             contract_id=contract_id,
-            invoice_status=invoice_status
+            invoice_status=invoice_status,
+            created_at=datetime.now(timezone.utc)
         )
     )

@@ -1,4 +1,5 @@
 from uuid import UUID
+from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
@@ -11,3 +12,5 @@ class WebSocketMessage(BaseModel):
     buyer_email: str
     contract_id: str
     invoice_status: EnumInvoiceStatus
+
+    created_at: datetime
