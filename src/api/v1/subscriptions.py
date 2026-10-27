@@ -7,7 +7,7 @@ from ...core.exceptions.http_exceptions import (
     NotFoundException
 )
 
-from ..dependencies import get_user_by_query
+from ..dependencies import user_by_query
 
 from ...db.database import get_db
 from ...models.user import User
@@ -29,14 +29,14 @@ router = APIRouter(prefix="/subscriptions", tags=["Subscriptions"])
 @router.get("/all", response_model=list[SubscriptionRead])
 async def get_all_subscriptions(
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[User, Depends(get_user_by_query)]
+    user: Annotated[User, Depends(user_by_query)]
 ) -> list[Subscription]:
     return await get_user_subscriptions(db=db, user_id=user.id)
 
 @router.get("/active", response_model=SubscriptionRead | None)
 async def get_active_subscription(
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[User, Depends(get_user_by_query)]
+    user: Annotated[User, Depends(user_by_query)]
 ) -> Subscription | None:
     return await get_active_user_subscription(db=db, user_id=user.id)
 

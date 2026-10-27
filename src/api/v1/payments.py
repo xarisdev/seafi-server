@@ -8,7 +8,7 @@ from ...core.exceptions.http_exceptions import (
     NotFoundException
 )
 
-from ..dependencies import get_user_by_query
+from ..dependencies import user_by_query
 
 from ...db.database import get_db
 from ...crud.crud_plans import crud_plans
@@ -28,7 +28,7 @@ router = APIRouter(prefix="/payments", tags=["Payments"])
 @router.post("/invoices", response_model=InvoiceRead, status_code=201)
 async def create_invoice(
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[User, Depends(get_user_by_query)],
+    user: Annotated[User, Depends(user_by_query)],
     plan_id: Annotated[int, Query(alias="plan_id")],
     currency: Annotated[
         EnumInvoiceCurrency,
@@ -78,7 +78,7 @@ async def create_invoice(
 @router.get("/invoices", response_model=list[InvoiceRead])
 async def get_user_invoices_by_status(
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[User, Depends(get_user_by_query)],
+    user: Annotated[User, Depends(user_by_query)],
     status: Annotated[EnumInvoiceStatus | None, Query(alias="status")] = None
 ) -> list[InvoiceRead]:
     result = await get_user_invoices(db=db, user_id=user.id, status=status)

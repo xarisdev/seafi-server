@@ -48,6 +48,8 @@ Full interactive API documentation is available through Swagger UI:
 
 **[Open Swagger UI](https://seafi.xaris.space/docs)**
 
+Also, see detailed API documentation and architecture notes in Russian [here](docs/README.md)
+
 ## Testing
 
 Run tests locally:
