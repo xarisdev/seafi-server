@@ -4,7 +4,7 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from src.api.dependencies import verify_x_api_key, verify_lava_webhook_key
+from src.api.dependencies import verify_x_api_key, verify_lava_webhook_secret
 from src.db.database import get_db
 from src.db.model import Base
 from src.core.main import app
@@ -64,11 +64,11 @@ async def client(db_session):
     async def _override_verify_x_api_key():
         return None
 
-    async def _override_verify_lava_webhook_key():
+    async def _override_verify_lava_webhook_secret():
         return None
 
     app.dependency_overrides[verify_x_api_key] = _override_verify_x_api_key
-    app.dependency_overrides[verify_lava_webhook_key] = _override_verify_lava_webhook_key
+    app.dependency_overrides[verify_lava_webhook_secret] = _override_verify_lava_webhook_secret
     
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as _client:
         yield _client

@@ -11,9 +11,9 @@ router = APIRouter(tags=["Tunnel"])
 @router.websocket("/ws/connect")
 async def connect_weboskcet(
     websocket: WebSocket,
-    secret_key: Annotated[str, Query(description="secret_key")]
+    secret_key: Annotated[str, Query(description="X-WSS-Key")]
 ):
-    if secret_key != settings.APP_TOKEN:
+    if secret_key != settings.X_WSS_KEY:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
     

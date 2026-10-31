@@ -4,13 +4,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi import APIRouter, Request, Depends
 
-from ..dependencies import verify_lava_webhook_key
+from ..dependencies import verify_lava_webhook_secret
 
 from ...db.database import get_db
 
 from ...integrations.lava.handlers.webhook_handler import handle_webhook
 
-router = APIRouter(prefix="/webhook", tags=["Webhook"], dependencies=[Depends(verify_lava_webhook_key)])
+router = APIRouter(prefix="/webhook", tags=["Webhook"], dependencies=[Depends(verify_lava_webhook_secret)])
 
 @router.post("/lava", status_code=200)
 async def receive_webhook(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):

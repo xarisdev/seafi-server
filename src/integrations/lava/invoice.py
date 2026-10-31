@@ -29,7 +29,7 @@ logger = logging.getLogger("integrations.lava.invoice")
 def _lava_headers() -> dict[str, str]:
     return {
         "Accept": "application/json",
-        "X-Api-Key": settings.LAVA_API_KEY,
+        "X-Api-Key": settings.LAVA_X_API_KEY,
         "Content-Type": "application/json"
     }
 
@@ -145,9 +145,9 @@ async def create_lava_invoice(
             "offerId": offer_id,
             "currency": currency,
             "amount": float(amount),
-            "successful_return_url": f"{settings.LAVA_REDIRECT_URI}/success",
-            "failure_return_url": f"{settings.LAVA_REDIRECT_URI}/failure",
-            "cancel_return_url": f"{settings.LAVA_REDIRECT_URI}/cancel"
+            "successful_return_url": "https://seafi.xaris.space/payment/redirect/success",
+            "failure_return_url": "https://seafi.xaris.space/payment/redirect/failure",
+            "cancel_return_url": "https://seafi.xaris.space/payment/redirect/cancel"
         }
     )
     response["payment_timeout_s"] = 15 * 60

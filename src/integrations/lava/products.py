@@ -13,7 +13,7 @@ async def get_products() -> list[ProductSchema]:
         try:
             response = await client.get(
                 url=f"{settings.LAVA_API_URL}/v2/products?feedVisibility=ALL",
-                headers={"X-Api-Key": settings.LAVA_API_KEY},
+                headers={"X-Api-Key": settings.LAVA_X_API_KEY},
                 timeout=15.0
             )
             if response.status_code != 200:
