@@ -6,11 +6,19 @@
 
 **seafi-server** is a backend part of the project. It provides an API for the project's own client — the Telegram bot [@seafi_arenda_bot](https://t.me/seafi_arenda_bot).
 
+Visit [site](https://seafi.xaris.space/)
+
+Also, see client repository — [seafi-bot](https://github.com/xarisdev/seafi-bot)
+
 ## API Documentation
 
-Temporarily unavailable.
+Full interactive API documentation is available through Swagger UI: [Open Swagger UI](https://seafi.xaris.space/docs)
 
 ## Architecture
+
+FastAPI Server
+    ⇅
+Telegram Bot
 
 See detailed API documentation and architecture notes in Russian [here](docs/README.md)
 
