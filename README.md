@@ -6,9 +6,13 @@
 
 **seafi-server** is a backend part of the project. It provides an API for the project's own client — the Telegram bot [@seafi_arenda_bot](https://t.me/seafi_arenda_bot).
 
+## API Documentation
+
+Temporarily unavailable.
+
 ## Architecture
 
-Telegram Bot → API → WebAgent → Real Estate Websites
+See detailed API documentation and architecture notes in Russian [here](docs/README.md)
 
 ## Stack
 
@@ -41,14 +45,6 @@ uvicorn src.core.main:app --reload --port 8000
 ```bash
 docker compose up -d --build
 ```
-
-## API Documentation
-
-Full interactive API documentation is available through Swagger UI:
-
-**[Open Swagger UI](https://seafi.xaris.space/docs)**
-
-Also, see detailed API documentation and architecture notes in Russian [here](docs/README.md)
 
 ## Testing
 

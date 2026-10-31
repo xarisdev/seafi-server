@@ -5,4 +5,4 @@
 
 [Документация по API](../api/README.md)
 
-+ Архитектура [Очередей и Агентов](queue%20and%20agents.md)
++ [Парсеры и уведомления](parsers,%20notifications.md)
