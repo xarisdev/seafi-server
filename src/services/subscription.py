@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, exists, update, insert, literal, and_, func
 
 from ..models.plan import Plan
-from ..models.invoice import Invoice, EnumInvoiceStatus
+from ..models.invoice import Invoice
 from ..models.subscription import Subscription
 
 # ------------ API routes helpers ------------

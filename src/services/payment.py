@@ -3,7 +3,8 @@ from datetime import datetime, timedelta, UTC
 from sqlalchemy import select, exists, update, case
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models.invoice import Invoice, EnumInvoiceStatus
+from ..models.invoice import Invoice
+from ..enums.invoice import EnumInvoiceStatus
 
 async def check_pending_invoice(db: AsyncSession, user_id: int) -> bool:
     return await db.scalar(

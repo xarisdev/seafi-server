@@ -1,4 +1,3 @@
-from enum import Enum
 from decimal import Decimal
 
 from typing import Annotated
@@ -10,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_serializer
 from datetime import datetime, timezone
 
 from ..db.model import Base
+from ..enums.invoice import EnumInvoiceStatus, EnumInvoiceCurrency
 
 MAX_DIGITS = 10
 DECIMAL_PLACES = 2
@@ -22,20 +22,6 @@ AmountField = Annotated[
         ge=0
     )
 ]
-
-class EnumInvoiceStatus(str, Enum):
-    PENDING = "pending"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
-    COMPLETED = "completed"
-
-class EnumInvoiceCurrency(str, Enum):
-    USD = "USD"
-    RUB = "RUB"
-
-class EnumInvoiceCurrencyExchange(Decimal, Enum):
-    USD = Decimal("1.00")
-    RUB = Decimal("85.00")
 
 class Invoice(Base):
     __tablename__ = "invoices"

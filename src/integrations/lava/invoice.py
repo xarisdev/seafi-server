@@ -16,10 +16,12 @@ from ...core.exceptions.http_exceptions import (
 from ...core.config import settings
 from ...models.invoice import (
     InvoiceCreate,
-    InvoiceRead,
+    InvoiceRead
+)
+from ...enums.invoice import (
+    EnumInvoiceStatus,
     EnumInvoiceCurrency,
-    EnumInvoiceCurrencyExchange,
-    EnumInvoiceStatus
+    EnumInvoiceCurrencyExchange
 )
 
 logger = logging.getLogger("integrations.lava.invoice")

@@ -3,7 +3,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from .invoice import EnumInvoiceStatus
+from ..enums.invoice import EnumInvoiceStatus
 
 class WebSocketMessage(BaseModel):
     model_config = ConfigDict(from_attributes=True)

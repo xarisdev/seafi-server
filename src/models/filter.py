@@ -2,19 +2,11 @@ from sqlalchemy import BigInteger, String, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..db.model import Base
+from ..enums.advertisement import EnumAdsType, EnumAdsOwner
 
-from enum import Enum
 from pydantic import BaseModel, ConfigDict
 
 from typing import Optional
-
-class EnumFilterAdsType(str, Enum):
-    RENT = "rent"
-    SELL = "sell"
-
-class EnumFilterAdsOwner(str, Enum):
-    AGENT = "agent"
-    OWNER = "owner"
 
 class Filter(Base):
     __tablename__ = "filters"
@@ -24,8 +16,8 @@ class Filter(Base):
 
     city: Mapped[str] = mapped_column(String, default="bishkek")
     
-    ads_type: Mapped[Optional[EnumFilterAdsType]] = mapped_column(String, default=EnumFilterAdsType.RENT)
-    ads_owner: Mapped[Optional[EnumFilterAdsOwner]] = mapped_column(String, nullable=True)
+    ads_type: Mapped[Optional[EnumAdsType]] = mapped_column(String, default=EnumAdsType.RENT)
+    ads_owner: Mapped[Optional[EnumAdsOwner]] = mapped_column(String, default=EnumAdsOwner.ANY)
 
     min_price: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     max_price: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
@@ -36,8 +28,8 @@ class FilterCreate(BaseModel):
 class FilterUpdate(BaseModel):
     city: Optional[str] = None
     
-    ads_type: Optional[EnumFilterAdsType] = None
-    ads_owner: Optional[EnumFilterAdsOwner] = None
+    ads_type: Optional[EnumAdsType] = None
+    ads_owner: Optional[EnumAdsOwner] = None
 
     min_price: Optional[int] = None
     max_price: Optional[int] = None
@@ -49,7 +41,7 @@ class FilterRead(BaseModel):
     user_id: int
 
     city: str
-    ads_type: EnumFilterAdsType
-    ads_owner: EnumFilterAdsOwner | None
+    ads_type: EnumAdsType
+    ads_owner: EnumAdsOwner | None
     min_price: int | None
     max_price: int | None

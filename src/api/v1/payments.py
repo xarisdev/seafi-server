@@ -15,7 +15,8 @@ from ...crud.crud_plans import crud_plans
 from ...crud.crud_invoices import crud_invoices
 from ...models.user import User
 from ...models.plan import PlanRead
-from ...models.invoice import InvoiceRead, EnumInvoiceCurrency, EnumInvoiceStatus
+from ...models.invoice import InvoiceRead
+from ...enums.invoice import EnumInvoiceStatus, EnumInvoiceCurrency
 
 from ...services.subscription import check_active_subscription
 from ...services.payment import check_pending_invoice, get_user_invoices, cancel_user_invoice
