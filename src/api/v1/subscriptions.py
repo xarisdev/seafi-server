@@ -54,17 +54,17 @@ async def get_subscription(
 
 # ------------ Manual control (placeholders) ------------
 
-@router.post("/manual/create")
+@router.post("/manual/create", include_in_schema=False)
 async def manual_post_subscription(
     subscription: SubscriptionCreate,
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
-    pass
+    return None
 
-@router.patch("/manual/{subscription_id}")
+@router.patch("/manual/{subscription_id}", include_in_schema=False)
 async def manual_patch_subscription(
     subscription_id: int,
     subscription: SubscriptionUpdate,
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
-    pass
+    return None

@@ -8,6 +8,9 @@ from src.api.dependencies import verify_x_api_key, verify_lava_webhook_secret
 from src.db.database import get_db
 from src.db.model import Base
 from src.core.main import app
+from src.core.config import settings
+
+settings.APP_ENV = "test"
 
 TEST_DATABASE_URL = (
     "postgresql+asyncpg://postgres:postgres@localhost:5432/seafi_test"

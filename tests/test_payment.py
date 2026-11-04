@@ -2,7 +2,9 @@ import pytest
 
 from datetime import datetime, timezone
 
+from src.api.dependencies import verify_lava_webhook_secret
 from src.core.config import settings
+from src.core.exceptions.http_exceptions import ForbiddenException, UnauthorizedException
 
 @pytest.mark.asyncio
 async def test_create_link(client, user):
@@ -11,6 +13,7 @@ async def test_create_link(client, user):
 
     first_product = response.json()[0]
     assert "/ seafi" in first_product["title"]
+    assert first_product["offer_id"] == "FAKE-OFFER-ID"
 
     response = await client.post(
         "/api/v1/plans",
@@ -32,6 +35,7 @@ async def test_create_link(client, user):
 
     invoice_schema = response.json()
     assert invoice_schema["status"] == "pending"
+    assert invoice_schema["contract_id"].startswith("fake-contract-")
 
 @pytest.mark.asyncio
 async def test_not_found_subscription(client, user):
@@ -121,6 +125,23 @@ async def test_check_real_invoice(client, user):
         f"/api/v1/payments/invoices/{invoice_schema['id']}"
     )
     assert response.status_code == 200"""
+
+@pytest.mark.asyncio
+async def test_verify_lava_webhook_secret_success():
+    assert await verify_lava_webhook_secret(settings.LAVA_WEBHOOK_SECRET) is True
+
+
+@pytest.mark.asyncio
+async def test_verify_lava_webhook_secret_invalid():
+    with pytest.raises(ForbiddenException):
+        await verify_lava_webhook_secret("wrong-secret")
+
+
+@pytest.mark.asyncio
+async def test_verify_lava_webhook_secret_missing():
+    with pytest.raises(UnauthorizedException):
+        await verify_lava_webhook_secret("")
+
 
 @pytest.mark.asyncio
 async def test_check_invoice_not_exists(client):

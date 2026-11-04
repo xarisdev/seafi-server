@@ -21,23 +21,34 @@ from ..core.config import settings
 
 # ------------ Verify ------------
 
-async def verify_x_api_key(x_api_key: Annotated[str, Header(alias="X-Api-Key")]):
-    if not x_api_key:
-        raise UnauthorizedException("Missing API key")
+def _validate_secret(secret_value: str | None, expected_secret: str, header_name: str, secret_label: str) -> bool:
+    if not secret_value:
+        raise UnauthorizedException(f"Missing {secret_label} in header '{header_name}'")
 
-    is_valid = hmac.compare_digest(x_api_key, settings.X_API_KEY)
+    is_valid = hmac.compare_digest(secret_value, expected_secret)
     if not is_valid:
-        raise ForbiddenException("Invalid API key")
+        raise ForbiddenException(f"Invalid {secret_label} in header '{header_name}'")
+
+    return True
+
+
+async def verify_x_api_key(x_api_key: Annotated[str, Header(alias="X-Api-Key")]):
+    return _validate_secret(
+        secret_value=x_api_key,
+        expected_secret=settings.X_API_KEY,
+        header_name="X-Api-Key",
+        secret_label="API key",
+    )
+
 
 async def verify_lava_webhook_secret(lava_webhook_secret: Annotated[str, Header(alias="X-Api-Key")]):
-    if not lava_webhook_secret:
-        raise UnauthorizedException("Missing API key")
-
-    is_valid = hmac.compare_digest(lava_webhook_secret, settings.LAVA_WEBHOOK_SECRET)
-    if not is_valid:
-        raise ForbiddenException("Invalid API key")
-
-    return is_valid
+    # Lava contract sends the webhook secret in the X-Api-Key header.
+    return _validate_secret(
+        secret_value=lava_webhook_secret,
+        expected_secret=settings.LAVA_WEBHOOK_SECRET,
+        header_name="X-Api-Key",
+        secret_label="Lava webhook secret",
+    )
 
 # ------------ User ------------
 
@@ -81,7 +92,7 @@ async def user_by_query(
 async def _find_filter(db: AsyncSession, **kwargs):
     db_filter = await crud_filters.get(
         db=db,
-        schema_to_select=UserRead,
+        schema_to_select=FilterRead,
         return_as_model=True,
         one_or_none=True,
         **kwargs
@@ -89,7 +100,7 @@ async def _find_filter(db: AsyncSession, **kwargs):
 
     if db_filter is None:
         raise NotFoundException(f"Filter with params: {kwargs} not found")
-    
+
     return db_filter
 
 async def get_filter_by_path(

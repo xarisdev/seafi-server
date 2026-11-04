@@ -8,9 +8,10 @@ ENV_PATH = CURRENT_FILE_DIR.parent.parent / ".env"
 
 class Application(BaseSettings):
     APP_NAME: str = "seafi-server"
-    X_API_KEY: str
-    X_WSS_KEY: str
-    ADMIN_KEY: str
+    APP_ENV: str = "development"
+    X_API_KEY: str = "test-api-key"
+    X_WSS_KEY: str = "test-wss-key"
+    ADMIN_KEY: str = "test-admin-key"
 
     model_config = SettingsConfigDict(
         env_file=ENV_PATH,
@@ -18,10 +19,10 @@ class Application(BaseSettings):
     )
 
 class PostgresDataBase(BaseSettings):
-    POSTGRES_DB: str
-    POSTGRES_USER: str
-    POSTGRES_PASSWORD: str
-    POSTGRES_URL: str
+    POSTGRES_DB: str = "seafi"
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/seafi"
 
     model_config = SettingsConfigDict(
         env_file=ENV_PATH,
@@ -30,8 +31,8 @@ class PostgresDataBase(BaseSettings):
 
 class PaymentService(BaseSettings):
     LAVA_API_URL: str = "https://gate.lava.top/api"
-    LAVA_WEBHOOK_SECRET: str
-    LAVA_X_API_KEY: str
+    LAVA_WEBHOOK_SECRET: str = "test-lava-webhook-secret"
+    LAVA_X_API_KEY: str = "test-lava-x-api-key"
 
     model_config = SettingsConfigDict(
         env_file=ENV_PATH,
@@ -39,12 +40,12 @@ class PaymentService(BaseSettings):
     )
 
 class TestSettings(BaseSettings):
-    TEST_TELEGRAM_ID: int
-    TEST_USERNAME: str
+    TEST_TELEGRAM_ID: int = 123456789
+    TEST_USERNAME: str = "test-user"
 
     model_config = SettingsConfigDict(
         env_file=ENV_PATH,
-        enable_decoding="utf-8"
+        env_file_encoding="utf-8"
     )
 
 class Settings(

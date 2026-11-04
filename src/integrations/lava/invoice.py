@@ -5,6 +5,7 @@ from typing import Literal
 from decimal import Decimal, ROUND_HALF_UP
 from pydantic import ValidationError
 
+from .fake_provider import build_fake_invoice
 from ...core.exceptions.http_exceptions import (
     HTTPException,
     BadRequestException,
@@ -136,6 +137,16 @@ async def create_lava_invoice(
     amount: Decimal,
     currency: EnumInvoiceCurrency
 ) -> InvoiceCreate:
+    if settings.APP_ENV.lower() == "test":
+        return build_fake_invoice(
+            user_id=user_id,
+            plan_id=plan_id,
+            offer_id=offer_id,
+            telegram_id=telegram_id,
+            amount=amount,
+            currency=currency,
+        )
+
     amount = _get_amount_by_currency(amount, currency=currency)
 
     response = await async_client(
@@ -153,7 +164,7 @@ async def create_lava_invoice(
         }
     )
     response["payment_timeout_s"] = 15 * 60
-    
+
     try:
         return InvoiceCreate(
             user_id=user_id,
@@ -164,7 +175,7 @@ async def create_lava_invoice(
             amount_total=response["amountTotal"]["amount"],
             status=_normalize_invoice_status(response["status"])
         )
-    
+
     except ValidationError as exc:
         logger.exception("Invalid Lava invoice response")
         raise HTTPException(
@@ -173,26 +184,31 @@ async def create_lava_invoice(
         ) from exc
 
 async def check_lava_invoice(invoice: InvoiceRead) -> tuple[EnumInvoiceStatus, str] | None:
+    if settings.APP_ENV.lower() == "test":
+        if invoice.status == EnumInvoiceStatus.PENDING:
+            return [EnumInvoiceStatus.COMPLETED, 'success']
+        return None
+
     response = await async_client(
         method='GET',
         url=f"{settings.LAVA_API_URL}/v1/invoices/{invoice.contract_id}",
         headers=_lava_headers()
     )
     invoice_status = _normalize_invoice_status(response["status"], response.get("errorMessage"))
-    
+
     if invoice.status != invoice_status:
         if invoice_status == EnumInvoiceStatus.PENDING: # ignore
             return None
-        
+
         if invoice_status in (EnumInvoiceStatus.FAILED, EnumInvoiceStatus.CANCELLED):
             if invoice.status == EnumInvoiceStatus.PENDING:
                 return [invoice_status, 'failed']
-            
+
         if invoice_status == EnumInvoiceStatus.COMPLETED:
             if any([
                 invoice.status == EnumInvoiceStatus.PENDING,
                 invoice.status in (EnumInvoiceStatus.FAILED, EnumInvoiceStatus.CANCELLED)
             ]):
                 return [invoice_status, 'success']
-            
+
     return None

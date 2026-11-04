@@ -64,16 +64,16 @@ async def patch_filter(
         object=data
     )
 
-@router.post("/{id}/activate", status_code=204)
+@router.post("/{id}/activate", status_code=204, include_in_schema=False)
 async def activate_filter(
     db: Annotated[AsyncSession, Depends(get_db)],
     db_filter: Annotated[FilterRead, Depends(get_filter_by_path)]
 ) -> None:
-    pass
+    return None
 
-@router.post("/{id}/deactivate", status_code=204)
+@router.post("/{id}/deactivate", status_code=204, include_in_schema=False)
 async def deactivate_filter(
     db: Annotated[AsyncSession, Depends(get_db)],
     db_filter: Annotated[FilterRead, Depends(get_filter_by_path)]
 ) -> None:
-    pass
+    return None

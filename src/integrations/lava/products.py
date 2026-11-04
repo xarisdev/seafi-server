@@ -1,6 +1,7 @@
 import httpx
 import logging
 
+from .fake_provider import build_fake_products
 from .models import ProductSchema
 
 from ...core.exceptions.http_exceptions import HTTPException
@@ -8,7 +9,11 @@ from ...core.config import settings
 
 logger = logging.getLogger("integrations.lava.products")
 
+
 async def get_products() -> list[ProductSchema]:
+    if settings.APP_ENV.lower() == "test":
+        return build_fake_products()
+
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(
@@ -29,7 +34,7 @@ async def get_products() -> list[ProductSchema]:
 
             products: list[ProductSchema] = []
             items = data.get("items", [])
-            
+
             for product in items:
                 offers = product.get("offers")
                 if not offers:
@@ -53,7 +58,7 @@ async def get_products() -> list[ProductSchema]:
 
             logger.info(f"Found {len(products)} products")
             return products
-        
+
         except httpx.RequestError:
             error_msg = "Bad Request integrated service. (Lava.top)"
             logger.error(error_msg, exc_info=True)
