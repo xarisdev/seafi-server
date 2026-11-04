@@ -50,6 +50,14 @@ uvicorn src.core.main:app --reload --port 8000
 
 ### Docker
 
+Create the environment file and replace the example database password and service keys:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Then start the API and PostgreSQL:
+
 ```bash
 docker compose up -d --build
 ```

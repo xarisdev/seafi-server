@@ -6,7 +6,7 @@ WORKDIR /src
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir "uvicorn[standart]"
+    pip install --no-cache-dir "uvicorn[standard]"
 
 # --- build ---
 COPY . .

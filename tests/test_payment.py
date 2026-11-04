@@ -1,6 +1,6 @@
 import pytest
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from src.api.dependencies import verify_lava_webhook_secret
 from src.core.config import settings
@@ -91,7 +91,14 @@ async def test_get_success_subscription(client, user):
         f"/api/v1/subscriptions/active?telegram_id={settings.TEST_TELEGRAM_ID}"
     )
     assert response.status_code == 200
-    assert response.json()["user_id"] == user.id
+    subscription = response.json()
+    assert subscription["user_id"] == user.id
+    assert subscription["plan_id"] == plan["id"]
+    assert subscription["invoice_id"] == invoice_schema["id"]
+    assert subscription["source"] == "webhook"
+    started_at = datetime.fromisoformat(subscription["started_at"])
+    expires_at = datetime.fromisoformat(subscription["expires_at"])
+    assert expires_at - started_at == timedelta(hours=plan["duration"])
 
 """@pytest.mark.asyncio
 async def test_check_real_invoice(client, user):
