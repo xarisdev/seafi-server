@@ -1,6 +1,6 @@
 # Documentation / Документация
 
-Документация и заметки ведутся на русском языке
+Пользовательская и архитектурная документация проекта.
 
 > Documentation and notes are maintained in Russian.
 

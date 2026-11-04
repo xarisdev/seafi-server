@@ -36,7 +36,13 @@ See detailed API documentation and architecture notes in Russian [here](docs/REA
 
 ### Local
 
-Create a virtual environment and install dependencies:
+The API requires a reachable PostgreSQL database. Create `.env` from the example and set `POSTGRES_URL` to the database address reachable from the host (use `localhost`, not the Compose service name `db`):
+
+```bash
+cp .env.example .env
+```
+
+Create a virtual environment and install dependencies (Python 3.12, matching the Docker image):
 
 ```bash
 python -m venv .venv
@@ -50,10 +56,10 @@ uvicorn src.core.main:app --reload --port 8000
 
 ### Docker
 
-Create the environment file and replace the example database password and service keys:
+Create the environment file and replace the example database password and service keys. The Compose `POSTGRES_URL` must use host `db` because the API connects to the database container over the Compose network.
 
-```powershell
-Copy-Item .env.example .env
+```bash
+cp .env.example .env
 ```
 
 Then start the API and PostgreSQL:
@@ -70,4 +76,4 @@ Run tests locally:
 pytest
 ```
 
-Tests are also executed automatically by GitHub Actions before deployment.
+The current GitHub Actions workflow deploys on pushes to `main`; it does not run the test suite. Tests require PostgreSQL at `localhost:5432` with a database named `seafi_test` and the credentials configured in `tests/conftest.py`.
