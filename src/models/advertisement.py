@@ -38,6 +38,10 @@ class Advertisement(Base):
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc)
     )
+    published_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True
+    )
 
 class AdvertisementCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -51,6 +55,7 @@ class AdvertisementCreate(BaseModel):
     city: str
     type: EnumAdsType
     owner: Optional[EnumAdsOwner] = EnumAdsOwner.ANY
+    published_at: Optional[datetime] = None
 
 class AdvertisementRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -75,3 +80,5 @@ class AdvertisementUpdate(BaseModel):
     price: Optional[int] = None
 
     last_seen_at: datetime
+    published_at: datetime | None
+    published_at: Optional[datetime] = None

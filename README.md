@@ -51,6 +51,7 @@ pip install -r requirements.txt
 Start the server:
 
 ```bash
+alembic upgrade head
 uvicorn src.core.main:app --reload --port 8000
 ```
 

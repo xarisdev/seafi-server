@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, DateTime, UniqueConstraint, ForeignKey, BigInteger
+from sqlalchemy import String, Integer, DateTime, UniqueConstraint, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from datetime import datetime, timezone
@@ -13,13 +13,13 @@ from typing import Optional
 class AdvertisementDelivery(Base):
     __tablename__ = "advertisement_deliveries"
     __table_args__ = (
-        UniqueConstraint("ads_id", "user_id"),
+        UniqueConstraint("ads_id", "user_id", name="uq_ad_delivery_ad_user"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    ads_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("advertisements.id"))
-    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"))
+    ads_id: Mapped[int] = mapped_column(Integer, ForeignKey("advertisements.id"))
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
 
     status: Mapped[EnumAdsDeliveryStatus] = mapped_column(String, default=EnumAdsDeliveryStatus.PENDING)
     attempts: Mapped[int] = mapped_column(Integer, default=0)
@@ -29,6 +29,10 @@ class AdvertisementDelivery(Base):
         default=lambda: datetime.now(timezone.utc)
     )
     sent_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True
+    )
+    last_attempt_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True),
         nullable=True
     )
@@ -54,6 +58,7 @@ class AdvertisementDeliveryRead(BaseModel):
 
     created_at: datetime
     sent_at: datetime | None
+    last_attempt_at: datetime | None
 
 class AdvertisementDeliveryUpdate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -61,3 +66,4 @@ class AdvertisementDeliveryUpdate(BaseModel):
     attempts: int
     status: Optional[EnumAdsDeliveryStatus] = None
     sent_at: Optional[datetime] = None
+    last_attempt_at: Optional[datetime] = None

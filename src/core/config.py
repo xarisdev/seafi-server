@@ -12,6 +12,7 @@ class Application(BaseSettings):
     X_API_KEY: str = "test-api-key"
     X_WSS_KEY: str = "test-wss-key"
     ADMIN_KEY: str = "test-admin-key"
+    ADMIN_TELEGRAM_ID: int | None = None
 
     model_config = SettingsConfigDict(
         env_file=ENV_PATH,

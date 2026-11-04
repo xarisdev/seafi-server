@@ -11,12 +11,15 @@ from src.core.config import settings
 from src.db.model import Base
 
 from src.models.filter import Filter
+from src.models.advertisement import Advertisement
+from src.models.advertisement_delivery import AdvertisementDelivery
 from src.models.invoice import Invoice
 from src.models.plan import Plan
 from src.models.subscription import Subscription
 from src.models.user import User
 from src.models.webhook import Webhook
 from src.models.websocket import WebSocketMessage
+from src.models.scraper_state import ScraperState
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -3,6 +3,7 @@ import logging
 
 from asyncio import Lock
 from fastapi import WebSocket
+from pydantic import BaseModel
 
 from ..models.websocket import WebSocketMessage
 
@@ -16,6 +17,10 @@ class WebSocketManager:
         self._lock = Lock()
         self._connection_event = asyncio.Event()
         self._sender_task: asyncio.Task | None = None
+
+    @property
+    def is_connected(self) -> bool:
+        return self.connection is not None
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
@@ -34,7 +39,7 @@ class WebSocketManager:
 
         logger.info("WebSocket connection closed")
 
-    async def put_payload(self, message: WebSocketMessage):
+    async def put_payload(self, message: BaseModel):
         _json = message.model_dump(mode='json')
         await self.queue.put(_json)
 
